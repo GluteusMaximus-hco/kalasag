@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="5 4 54 112" role="img" aria-label="KALASAG">
+  <!-- shield body: top panel, pinched waist, bottom panel (shape of a traditional kalasag) -->
+  <path d="M12 6 L52 6 L55 40 L9 40 Z" fill="#B25A26"/>
+  <path d="M9 40 L55 40 Q41 62 55 84 L9 84 Q23 62 9 40 Z" fill="#B25A26"/>
+  <path d="M9 84 L55 84 L50 114 L14 114 Z" fill="#B25A26"/>
+  <!-- carved pattern lines -->
+  <g fill="none" stroke="#2A170D" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M19 10 V36 M25 10 V36 M39 10 V36 M45 10 V36"/>
+    <path d="M17 44.5 Q27.5 62 17 79.5 M47 44.5 Q36.5 62 47 79.5"/>
+    <path d="M15.5 88.5 H48.5 L45 110 H19 Z"/>
+    <path d="M22 93.5 H42 L40.2 105 H23.8 Z"/>
+  </g>
+  <!-- the two cross bars -->
+  <rect x="6.5" y="38.2" width="51" height="3.6" rx="1.8" fill="#E2C48A"/>
+  <rect x="6.5" y="82.2" width="51" height="3.6" rx="1.8" fill="#E2C48A"/>
+  <!-- center boss with the spiral -->
+  <circle cx="32" cy="62" r="9" fill="#EAD7AE" stroke="#2A170D" stroke-width="2.3"/>
+  <path d="M32 62 m0 -1.5 a1.5 1.5 0 1 1 -1.5 1.5 a3.2 3.2 0 0 1 3.2 -3.2 a4.9 4.9 0 0 1 4.9 4.9 a6.4 6.4 0 0 1 -6.4 6.4" fill="none" stroke="#2A170D" stroke-width="1.9549999999999998" stroke-linecap="round"/>
+</svg>
