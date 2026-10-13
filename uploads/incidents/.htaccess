@@ -1,0 +1,2 @@
+# nobody opens uploads directly, photos only go out through photo.php (it checks who you are)
+Require all denied

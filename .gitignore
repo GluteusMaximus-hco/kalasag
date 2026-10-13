@@ -1,0 +1,6 @@
+# has the gmail app password, keep it off github
+config/mail.php
+# residents' photos, never commit these
+uploads/incidents/*
+!uploads/incidents/.htaccess
+!uploads/incidents/index.html
