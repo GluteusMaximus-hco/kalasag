@@ -1,38 +1,128 @@
 # KALASAG
-Barangay Disaster and Emergency Response System for Barangay 172, Zone 17, Malibay, Pasay City.
-Stack: PHP + MySQLi, Bootstrap 5, Leaflet.js + OpenStreetMap, Chart.js
+**A Web-Based Barangay Disaster and Emergency Response System**
+for Barangay 172, Zone 17, Malibay, Pasay City
 
-## Setup (Ubuntu + Apache)
+Final project for Application Development and Emerging Technologies, Adamson University
+
+| Member | Role |
+|---|---|
+| Negrete, Richbert Zepri | Project Manager |
+| Ortiz, Hanz Christer | Lead Programmer & Full Stack Developer |
+| Tejadilla, Francis Khonrad D. | Database Administrator |
+| De Leon, John Aldrich | System Analyst |
+| Gabriel, Ryle Xamuel T. | Documentation |
+
+Stack: PHP 8 + MySQLi (no framework), MySQL/MariaDB, Bootstrap 5, Leaflet.js + OpenStreetMap, Chart.js, PHPMailer
+
+## Progress
+
+| Part | Status |
+|---|---|
+| Database (16 tables from our final ERD) | Done |
+| Front end (every screen, desktop + phone) | Done |
+| Core back end (saving, roles, reports, dispatch, analytics) | Done |
+| Forgot password by email | Done, needs the barangay Gmail in `config/mail.php` |
+| Emergency hotlines page | Done, waiting for the real numbers from the barangay |
+| SMS notifications (Android phone + barangay SIM) | Back-end review |
+| Email notifications | Back-end review |
+| Online hosting with domain + HTTPS | Before the final defense |
+| ML urgency tagging | Only if time permits |
+
+## Setup (Ubuntu)
 
 ```bash
-# 1. copy the project to apache
+# 1. install apache, php, mysql
+sudo apt update
+sudo apt install -y apache2 mysql-server php libapache2-mod-php php-mysql php-gd php-mbstring
+
+# 2. let php accept phone photos (default is only 2 MB)
+sudo sed -i 's/^upload_max_filesize.*/upload_max_filesize = 6M/; s/^post_max_size.*/post_max_size = 20M/' /etc/php/*/apache2/php.ini
+
+# 3. copy the project to apache
 sudo cp -r kalasag /var/www/html/
 sudo chown -R www-data:www-data /var/www/html/kalasag
 
-# 2. make the database + app user
+# 4. make the database + app user
 sudo mysql < /var/www/html/kalasag/database/schema.sql
 sudo mysql -e "CREATE USER IF NOT EXISTS 'kalasag'@'localhost' IDENTIFIED BY 'kalasag123'; GRANT ALL ON kalasag_db.* TO 'kalasag'@'localhost'; FLUSH PRIVILEGES;"
 
-# 3. make the first admin account (asks for name, username, password)
-cd /var/www/html/kalasag && php setup/create_admin.php
+# 5. make the first admin account (asks for name, username, password)
+cd /var/www/html/kalasag && sudo php setup/create_admin.php
 
-# 4. open it
+# 6. start + open
+sudo systemctl restart apache2 mysql
 xdg-open http://localhost/kalasag/
 ```
 
-No Apache? From inside the project folder: `php -S localhost:8000` then open http://localhost:8000
+The database starts clean. The only starting data is the 5 incident types (flood, fire, vehicular accident, fallen tree, medical emergency) since the report form needs them. Residents sign up on the register page, responder teams are made by the admin.
 
-The database starts clean. The only starting data is the 5 incident types (flood, fire, vehicular accident, fallen tree, medical emergency) since the report form needs them. Residents sign up on the register page.
+Heads up: re-running `schema.sql` wipes EVERYTHING in the db, admin account included.
 
-Heads up: re-running `schema.sql` wipes EVERYTHING in the db.
-
-## Updating an existing database
-
-If your db was made with an older schema.sql, run the migration instead of re-running schema.sql (this keeps your data):
+If your db was made with an older schema.sql, run the migration instead (keeps your data):
 
 ```bash
 sudo mysql kalasag_db < database/migrations/001_email_and_password_reset.sql
 ```
+
+## Running it again
+
+With Apache:
+```bash
+sudo systemctl start apache2 mysql
+xdg-open http://localhost/kalasag/
+```
+
+Or straight from the project folder, no copying to /var/www needed:
+```bash
+sudo systemctl start mysql
+php -S localhost:8000
+```
+then open http://localhost:8000 (Ctrl+C to stop).
+
+To try it on a phone, connect it to the same Wi-Fi and open `http://<laptop ip>/kalasag/` (get the ip with `hostname -I`). Phones only share GPS on https, so on plain http just tap the map to place the pin. GPS works once it's hosted online with https.
+
+## What's built
+
+**Residents** (`resident/`)
+- Home: report button, recent reports, announcements, 3 nearest evacuation centers
+- Report an emergency: incident type, GPS pin (drag to adjust), landmark, description, up to 3 photos
+- My reports + report page: 4-step status, timeline, photos, map, messages with the barangay, cancel while still pending
+- My household: address, map pin, elderly/PWD/pregnant/bedridden, Data Privacy Act (RA 10173) consent
+- Nearby evacuation centers: sorted by distance from GPS or the household pin, directions links
+
+**Guests** (no account)
+- `guest_report.php`: same report form, gives a KLS tracking code (1 report per 2 minutes per browser)
+- `track.php`: check status + message the barangay using the code (locks after 10 wrong codes)
+
+**Admin** (`admin/`)
+- Dashboard: live map (refreshes every 30 secs), counts, needs-attention queue
+- Incidents: filters (status, type, date, priority, search), CSV export
+- Incident page: status updates with remarks, urgency tag, priority flag, dispatch (matching teams first), messages, timeline
+- Responders: make team logins, incident types they handle, availability, deactivate
+- Residents & households: verify, reset password (for people without email), deactivate, household map
+- Announcements, evacuation centers (with map pin and open/full/closed)
+- Analytics: per month, by type, by status, response times, team table, print report, CSV
+
+**Responders** (`responder/`)
+- Assignments list + assignment page: directions, "We've arrived", "Mark as cleared" with notes, messages
+
+**Everyone**
+- Account page: edit name, mobile number, email, change password
+- Forgot password by email (once `config/mail.php` is set up)
+- Emergency hotlines page, open even when logged out
+
+**Automatic**
+- Reports within 100 m of a household with vulnerable members are flagged as priority
+- Photos are checked (real images only), resized, and their GPS/EXIF data is removed
+- Photos are only shown through `photo.php` to people allowed to see that report
+
+**Security**
+- Hashed passwords, CSRF tokens on every form, new session id on login
+- 5 wrong logins = wait 60 secs
+- Role checks on every page, residents only see their own reports
+- CSV export blocks formula injection
+
+Accounts are deactivated instead of deleted, and reports are cancelled instead of deleted, so the barangay keeps a full record for analytics and accountability.
 
 ## Forgot password by email (Gmail)
 
@@ -50,6 +140,36 @@ Put the Gmail in MAIL_USERNAME and the 16-letter app password (no spaces) in MAI
 
 Until mail.php exists, the forgot password page just tells people to go to the barangay hall.
 
+## Emergency hotlines
+
+Put the barangay's REAL numbers in `config/hotlines.php` (from the barangay questionnaire). Until then the page says the barangay hasn't added them yet. Don't guess numbers.
+
+## Blocking direct access to photos
+
+Photos are saved in `uploads/incidents/`. The `.htaccess` there blocks direct access, but Apache on Ubuntu ignores .htaccess by default. To turn it on, add this inside `/etc/apache2/sites-available/000-default.conf` (before `</VirtualHost>`) and restart Apache:
+
+```
+<Directory /var/www/html/kalasag/uploads>
+    Require all denied
+</Directory>
+```
+
+Even without it, photo file names are random and the pages only ever link to `photo.php`.
+
+## Troubleshooting
+
+**"Can't connect to the database"**: mysql isn't running, `sudo systemctl start mysql`
+
+**Forgot the admin password**: set a new one from the terminal (change newpass123 and the username)
+```bash
+NEWHASH=$(php -r 'echo password_hash("newpass123", PASSWORD_DEFAULT);')
+sudo mysql kalasag_db -e "UPDATE users SET password_hash='$NEWHASH' WHERE username='hanzortiz';"
+```
+
+**Photos won't upload**: install php-gd and do step 2 of setup, then `sudo systemctl restart apache2`
+
+**Page looks old after an update**: Ctrl+Shift+R to reload without cache
+
 ## Folders
 
 ```
@@ -62,68 +182,6 @@ includes/    auth helpers, shared layout, incident helpers, report form, mailer
 lib/         PHPMailer (for sending emails)
 assets/      css, js (map pin picker, photo previews), logo
 uploads/     incident photos (served only through photo.php)
-database/    schema.sql (clean, 16 tables)
+database/    schema.sql (clean, 16 tables) + migrations/
 setup/       create_admin.php (run once in the terminal)
 ```
-
-## Done so far (front end + core back end)
-
-Every screen in the scope is built and saves to the real database.
-
-**Residents** (`resident/`)
-- Home: report button, recent reports, announcements, 3 nearest evacuation centers
-- Report an emergency: incident type, GPS pin (drag to adjust), landmark, description, up to 3 photos
-- My reports + report tracking page: 4-step status, timeline, photos, map, messages with the barangay, cancel while still pending
-- My household: address, map pin, elderly/PWD/pregnant/bedridden, Data Privacy Act consent
-- Nearby evacuation centers: sorted by distance from GPS or the household pin, directions links
-
-**Guests** (no account)
-- `guest_report.php`: same report form, gives a tracking code (1 report per 2 minutes per browser)
-- `track.php`: check status + message the barangay with the code (locks after 10 wrong codes)
-
-**Admin** (`admin/`)
-- Dashboard: live map, counts, needs-attention queue (links to each incident)
-- Incidents: filters (status, type, date, priority, search), CSV export
-- Incident page: status updates with remarks, urgency tag, priority flag, dispatch (matching teams first), messages, timeline
-- Responders: create team logins, incident types they handle, availability, deactivate
-- Residents & households: verify, reset password (for people without email), deactivate, household map
-- Announcements, evacuation centers (with map pin and quick open/full/closed)
-- Analytics: per month, by type, by status, response times, team table, print report, CSV
-
-**Responders** (`responder/`)
-- Assignments list + assignment page: directions, "We've arrived", "Mark as cleared" with notes, messages
-
-**Automatic**
-- Reports within 100 m of a household with vulnerable members are flagged as priority
-- Photos are checked (real images only), resized, and their GPS/EXIF data is removed
-- Photos are only shown through `photo.php` to people allowed to see that report
-
-**Still to do for the back-end review:** SMS + email notifications, ML urgency (if time permits)
-
-## Extra setup for photos (do this once)
-
-```bash
-# lets PHP resize photos and strip their hidden GPS data
-sudo apt install php-gd
-
-# PHP only allows 2 MB uploads by default, phone photos are bigger
-sudo sed -i 's/^upload_max_filesize.*/upload_max_filesize = 6M/; s/^post_max_size.*/post_max_size = 20M/' /etc/php/*/apache2/php.ini
-sudo systemctl restart apache2
-```
-
-Photos are saved in `uploads/incidents/`. The `.htaccess` there blocks direct access, but Apache on Ubuntu ignores .htaccess by default. To turn it on, add this inside `/etc/apache2/sites-available/000-default.conf` (before `</VirtualHost>`) and restart Apache:
-
-```
-<Directory /var/www/html/kalasag/uploads>
-    Require all denied
-</Directory>
-```
-
-Even without it, photo file names are random and the page only ever links to `photo.php`.
-
-## Emergency hotlines
-
-Put the barangay's REAL numbers in `config/hotlines.php` (from the barangay questionnaire). Until then the page says the barangay hasn't added them yet. Don't guess numbers.
-
-## Next up
-SMS + email notifications, then the ML urgency tag if time permits.
