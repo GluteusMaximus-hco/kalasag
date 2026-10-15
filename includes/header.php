@@ -6,7 +6,7 @@ $page_title = $page_title ?? 'KALASAG';
 $active = $active ?? '';
 $extra_head = $extra_head ?? '';
 
-// sidebar links per role. ready = false means we havent built that page yet
+// sidebar links per role: key, label, icon, page
 $nav = [
     'admin' => [
         ['dashboard', 'Dashboard',           'bi-grid-1x2-fill',         'admin/dashboard.php'],
