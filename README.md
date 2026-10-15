@@ -21,8 +21,8 @@ Stack: PHP 8 + MySQLi (no framework), MySQL/MariaDB, Bootstrap 5, Leaflet.js + O
 | Database (16 tables from our final ERD) | Done |
 | Front end (every screen, desktop + phone) | Done |
 | Core back end (saving, roles, reports, dispatch, analytics) | Done |
-| Forgot password by email | Done, needs the barangay Gmail in `config/mail.php` |
-| Emergency hotlines page | Done, waiting for the real numbers from the barangay |
+| Forgot password by email | Done, waiting for the barangay's official Gmail |
+| Emergency hotlines page | Done, waiting for the official numbers from the barangay |
 | SMS notifications (Android phone + barangay SIM) | Back-end review |
 | Email notifications | Back-end review |
 | Online hosting with domain + HTTPS | Before the final defense |
@@ -49,16 +49,17 @@ sudo mysql -e "CREATE USER IF NOT EXISTS 'kalasag'@'localhost' IDENTIFIED BY 'ka
 # 5. make the first admin account (asks for name, username, password)
 cd /var/www/html/kalasag && sudo php setup/create_admin.php
 
-# 6. start + open
+# 6. start it
 sudo systemctl restart apache2 mysql
-xdg-open http://localhost/kalasag/
 ```
+
+Then open KALASAG on local host in your browser (the kalasag folder).
 
 The database starts clean. The only starting data is the 5 incident types (flood, fire, vehicular accident, fallen tree, medical emergency) since the report form needs them. Residents sign up on the register page, responder teams are made by the admin.
 
-Heads up: re-running `schema.sql` wipes EVERYTHING in the db, admin account included.
+**Note:** running `schema.sql` again deletes all data in the database, including the admin account.
 
-If your db was made with an older schema.sql, run the migration instead (keeps your data):
+Databases made with an older schema.sql are updated with this migration instead, which keeps the existing data:
 
 ```bash
 sudo mysql kalasag_db < database/migrations/001_email_and_password_reset.sql
@@ -69,17 +70,19 @@ sudo mysql kalasag_db < database/migrations/001_email_and_password_reset.sql
 With Apache:
 ```bash
 sudo systemctl start apache2 mysql
-xdg-open http://localhost/kalasag/
 ```
+then open KALASAG on local host in your browser.
 
 Or straight from the project folder, no copying to /var/www needed:
 ```bash
 sudo systemctl start mysql
 php -S localhost:8000
 ```
-then open http://localhost:8000 (Ctrl+C to stop).
+then open it on local host, port 8000, in your browser (Ctrl+C to stop).
 
-To try it on a phone, connect it to the same Wi-Fi and open `http://<laptop ip>/kalasag/` (get the ip with `hostname -I`). Phones only share GPS on https, so on plain http just tap the map to place the pin. GPS works once it's hosted online with https.
+Phones on the same Wi-Fi can open it using the laptop's IP address (`hostname -I`) followed by `/kalasag/`.
+
+Phones only share GPS on https. While it runs locally on plain http, the report pin is placed by tapping the map. GPS will work once the system is hosted online with https.
 
 ## What's built
 
@@ -135,18 +138,20 @@ cp config/mail.example.php config/mail.php
 nano config/mail.php
 ```
 
-Put the Gmail in MAIL_USERNAME and the 16-letter app password (no spaces) in MAIL_PASSWORD.
-`config/mail.php` is in .gitignore so the password doesn't end up on GitHub.
+The Gmail goes in MAIL_USERNAME and the 16-letter app password (no spaces) goes in MAIL_PASSWORD.
+`config/mail.php` is listed in .gitignore, so the password is never uploaded to GitHub.
 
-Until mail.php exists, the forgot password page just tells people to go to the barangay hall.
+**Status:** waiting for the barangay's official Gmail. Until it is set up, the forgot password page directs users to the barangay hall.
 
 ## Emergency hotlines
 
-Put the barangay's REAL numbers in `config/hotlines.php` (from the barangay questionnaire). Until then the page says the barangay hasn't added them yet. Don't guess numbers.
+**Status:** waiting for the official hotline numbers from Barangay 172.
+
+The numbers will be added to `config/hotlines.php` once the barangay provides them through our questionnaire. Until then, the hotlines page shows that the numbers are not yet available. Only official numbers from the barangay will be used, since a wrong hotline is dangerous during an emergency.
 
 ## Blocking direct access to photos
 
-Photos are saved in `uploads/incidents/`. The `.htaccess` there blocks direct access, but Apache on Ubuntu ignores .htaccess by default. To turn it on, add this inside `/etc/apache2/sites-available/000-default.conf` (before `</VirtualHost>`) and restart Apache:
+Photos are saved in `uploads/incidents/`. The `.htaccess` there blocks direct access, but Apache on Ubuntu ignores .htaccess by default. It is turned on by adding this inside `/etc/apache2/sites-available/000-default.conf` (before `</VirtualHost>`) and restart Apache:
 
 ```
 <Directory /var/www/html/kalasag/uploads>
@@ -154,21 +159,21 @@ Photos are saved in `uploads/incidents/`. The `.htaccess` there blocks direct ac
 </Directory>
 ```
 
-Even without it, photo file names are random and the pages only ever link to `photo.php`.
+Without this setting, photos are still protected since their file names are random and the pages only show them through `photo.php`.
 
 ## Troubleshooting
 
-**"Can't connect to the database"**: mysql isn't running, `sudo systemctl start mysql`
+**"Can't connect to the database"**: MySQL is not running. Start it with `sudo systemctl start mysql`
 
-**Forgot the admin password**: set a new one from the terminal (change newpass123 and the username)
+**Forgotten admin password**: a new one can be set from the terminal (replace newpass123 and the username)
 ```bash
 NEWHASH=$(php -r 'echo password_hash("newpass123", PASSWORD_DEFAULT);')
 sudo mysql kalasag_db -e "UPDATE users SET password_hash='$NEWHASH' WHERE username='hanzortiz';"
 ```
 
-**Photos won't upload**: install php-gd and do step 2 of setup, then `sudo systemctl restart apache2`
+**Photos won't upload**: php-gd is missing or the upload limit is too low. Install php-gd, do step 2 of setup, then run `sudo systemctl restart apache2`
 
-**Page looks old after an update**: Ctrl+Shift+R to reload without cache
+**Page looks old after an update**: the browser is showing a cached copy. Press Ctrl+Shift+R to reload.
 
 ## Folders
 
