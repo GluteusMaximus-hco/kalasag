@@ -16,6 +16,9 @@
 
         let marker = null;
         function place(latlng, acc, msg) {
+            // saved pins come in as [lat, lng] arrays, gps/taps as {lat, lng}, so make them the same
+            // (without this a saved pin turned into NaN after a form error and every resend failed)
+            latlng = L.latLng(latlng);
             if (!marker) {
                 marker = L.marker(latlng, { draggable: true }).addTo(map);
                 marker.on('dragend', () => { const p = marker.getLatLng(); set(p, null); say('Pin moved by hand.'); });

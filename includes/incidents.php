@@ -18,6 +18,22 @@ define('PRIORITY_RADIUS_M', 100);             // reports within 100 m of a vulne
 // barangay 172 coords from PhilAtlas, default map center everywhere
 const BRGY_LAT = 14.5351;
 const BRGY_LNG = 121.0114;
+// reports farther than this from the barangay center get blocked (not our jurisdiction)
+// 1 km covers the whole barangay plus room for GPS being a bit off
+const SERVICE_RADIUS_M = 1000;
+
+// straight-line distance in meters between 2 points (haversine)
+function meters_between($lat1, $lng1, $lat2, $lng2) {
+    $r = 6371000;
+    $dlat = deg2rad($lat2 - $lat1);
+    $dlng = deg2rad($lng2 - $lng1);
+    $a = sin($dlat / 2) ** 2 + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dlng / 2) ** 2;
+    return 2 * $r * asin(sqrt($a));
+}
+
+function meters_from_brgy($lat, $lng) {
+    return meters_between(BRGY_LAT, BRGY_LNG, $lat, $lng);
+}
 
 const STATUSES = ['pending', 'acknowledged', 'dispatched', 'resolved', 'cancelled'];
 const URGENCIES = ['critical', 'moderate', 'low'];

@@ -96,7 +96,7 @@ include __DIR__ . '/../includes/header.php';
                 <?php if (!$job['cleared_at']): ?>
                     <form method="post" class="mt-3"><?= csrf_field() ?><input type="hidden" name="action" value="cleared">
                         <label class="form-label" for="action_taken">What did the team do?</label>
-                        <textarea class="form-control mb-2" id="action_taken" name="action_taken" rows="3" maxlength="1000" placeholder="Example: Moved 2 families to the covered court, no injuries" required></textarea>
+                        <textarea class="form-control mb-2" id="action_taken" name="action_taken" rows="3" maxlength="1000" placeholder="Example: Moved 2 families to Malibay Plaza, no injuries" required></textarea>
                         <button class="btn btn-umber w-100" type="submit" data-confirm="Mark this job as cleared?">Mark as cleared</button></form>
                 <?php else: ?>
                     <p class="small mt-3 mb-0"><strong>Action taken:</strong> <?= e($job['action_taken']) ?></p>
