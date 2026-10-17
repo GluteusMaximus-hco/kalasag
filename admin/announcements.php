@@ -100,7 +100,7 @@ include __DIR__ . '/../includes/header.php';
                     <input type="hidden" name="action" value="save">
                     <input type="hidden" name="announcement_id" value="<?= $edit_id ?>">
                     <div class="mb-3"><label class="form-label" for="title">Title</label>
-                        <input class="form-control<?= isset($errors['title']) ? ' is-invalid' : '' ?>" id="title" name="title" maxlength="150" placeholder="Example: Covered court is open for evacuees" value="<?= e($d['title']) ?>"><?= $err('title') ?></div>
+                        <input class="form-control<?= isset($errors['title']) ? ' is-invalid' : '' ?>" id="title" name="title" maxlength="150" placeholder="Example: Malibay Plaza is open for evacuees" value="<?= e($d['title']) ?>"><?= $err('title') ?></div>
                     <div class="mb-3"><label class="form-label" for="category">Category</label>
                         <select class="form-select" id="category" name="category">
                             <?php foreach ($cats as $k => $lbl): ?><option value="<?= $k ?>" <?= $d['category'] === $k ? 'selected' : '' ?>><?= $lbl ?></option><?php endforeach; ?>

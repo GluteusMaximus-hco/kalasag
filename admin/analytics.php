@@ -86,8 +86,8 @@ include __DIR__ . '/../includes/header.php';
 <div class="stat-row mb-4">
     <div class="stat"><div class="num"><?= (int)$tot['total'] ?></div><div class="lbl">Reports</div></div>
     <div class="stat"><div class="num"><?= $resolved_pct === null ? '&ndash;' : $resolved_pct . '%' ?></div><div class="lbl">Resolved (<?= (int)$tot['resolved'] ?>)</div></div>
-    <div class="stat"><div class="num"><?= e($fmt_min($speed['ack_min'] === null ? null : (int)$speed['ack_min'])) ?></div><div class="lbl">Average time to acknowledge</div></div>
-    <div class="stat"><div class="num"><?= e($fmt_min($arrive['arrive_min'] === null ? null : (int)$arrive['arrive_min'])) ?></div><div class="lbl">Average time until responders arrive</div></div>
+    <div class="stat"><div class="num"><?= e($fmt_min($speed['ack_min'] === null ? null : (int)$speed['ack_min'])) ?></div><div class="lbl">Average time from report to acknowledge</div></div>
+    <div class="stat"><div class="num"><?= e($fmt_min($arrive['arrive_min'] === null ? null : (int)$arrive['arrive_min'])) ?></div><div class="lbl">Average time from report until responders arrive</div></div>
 </div>
 
 <div class="row g-4">
@@ -120,7 +120,7 @@ include __DIR__ . '/../includes/header.php';
             <?php if (!$teams): ?><div class="empty pt-0"><i class="bi bi-people" style="color:var(--muted)"></i>No responder teams yet.</div>
             <?php else: ?>
                 <div class="table-wrap"><table class="table data-table">
-                    <thead><tr><th>Team</th><th class="text-end">Dispatched</th><th class="text-end">Cleared</th><th class="text-end">Avg time to arrive</th></tr></thead>
+                    <thead><tr><th>Team</th><th class="text-end">Dispatched</th><th class="text-end">Cleared</th><th class="text-end">Avg time from dispatch to arrival</th></tr></thead>
                     <tbody><?php foreach ($teams as $t): ?>
                         <tr><td class="fw-semibold"><?= e($t['team_name']) ?></td><td class="text-end"><?= (int)$t['jobs'] ?></td><td class="text-end"><?= (int)$t['cleared'] ?></td>
                             <td class="text-end"><?= e($t['to_arrive'] === null ? 'No data' : $fmt_min((int)$t['to_arrive'])) ?></td></tr>

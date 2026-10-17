@@ -36,6 +36,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $lat = filter_var($d['latitude'], FILTER_VALIDATE_FLOAT); $lng = filter_var($d['longitude'], FILTER_VALIDATE_FLOAT);
     if ($lat === false || $lng === false) $errors['location'] = 'Pin your house on the map.';
     elseif ($lat < 14.3 || $lat > 14.85 || $lng < 120.85 || $lng > 121.2) $errors['location'] = 'That pin is outside Metro Manila. Move it to your house.';
+    // only barangay 172 households, otherwise the priority flag would point at houses we dont cover
+    elseif (meters_from_brgy($lat, $lng) > SERVICE_RADIUS_M) $errors['location'] = 'That pin is outside Barangay 172. Move it to your house inside the barangay.';
     if (empty($_POST['consent'])) $errors['consent'] = 'You need to agree to the privacy notice to save your household.';
 
     if (!$errors) {

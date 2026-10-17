@@ -108,7 +108,7 @@ include __DIR__ . '/../includes/header.php';
                     <input type="hidden" name="action" value="save">
                     <input type="hidden" name="center_id" value="<?= $edit_id ?>">
                     <div class="mb-3"><label class="form-label" for="center_name">Name</label>
-                        <input class="form-control<?= isset($errors['center_name']) ? ' is-invalid' : '' ?>" id="center_name" name="center_name" maxlength="120" placeholder="Example: Barangay 172 Covered Court" value="<?= e($d['center_name']) ?>"><?= $err('center_name') ?></div>
+                        <input class="form-control<?= isset($errors['center_name']) ? ' is-invalid' : '' ?>" id="center_name" name="center_name" maxlength="120" placeholder="Example: Malibay Plaza" value="<?= e($d['center_name']) ?>"><?= $err('center_name') ?></div>
                     <div class="mb-3"><label class="form-label" for="address">Address</label>
                         <input class="form-control<?= isset($errors['address']) ? ' is-invalid' : '' ?>" id="address" name="address" maxlength="255" value="<?= e($d['address']) ?>"><?= $err('address') ?></div>
                     <div class="row g-3 mb-3">

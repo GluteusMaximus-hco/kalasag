@@ -22,7 +22,13 @@ function validate_report($post, $files, $types, $guest) {
     $lat = filter_var($d['latitude'], FILTER_VALIDATE_FLOAT);
     $lng = filter_var($d['longitude'], FILTER_VALIDATE_FLOAT);
     if ($lat === false || $lng === false) $e['location'] = 'Set the location: tap "Use my location" or tap the map.';
-    elseif ($lat < 14.3 || $lat > 14.85 || $lng < 120.85 || $lng > 121.2) $e['location'] = 'That pin is outside Metro Manila. Move it to where the emergency is.';
+    elseif ($lat < 14.3 || $lat > 14.85 || $lng < 120.85 || $lng > 121.2) { $e['location'] = 'That pin is outside Metro Manila. Move it to where the emergency is.'; $e['outside'] = true; }
+    // barangay 172 can only send teams inside its own area, so far away reports get blocked here
+    // (this is the real check, the js warning on the form can be skipped)
+    elseif (meters_from_brgy($lat, $lng) > SERVICE_RADIUS_M) {
+        $e['location'] = 'That location is outside Barangay 172 (about ' . fmt_meters(meters_from_brgy($lat, $lng)) . ' away). KALASAG only covers Barangay 172, Zone 17. For emergencies elsewhere, call the emergency hotlines right away.';
+        $e['outside'] = true;
+    }
 
     if (mb_strlen($d['landmark']) > 150) $e['landmark'] = 'Keep the landmark under 150 characters.';
     if ($d['gps_accuracy'] !== '' && filter_var($d['gps_accuracy'], FILTER_VALIDATE_FLOAT) === false) $d['gps_accuracy'] = '';
@@ -112,6 +118,14 @@ function render_report_form($types, $d, $e, $guest) {
                 <input type="hidden" name="longitude" id="lng" value="<?= e($d['longitude']) ?>">
                 <input type="hidden" name="gps_accuracy" id="acc" value="<?= e($d['gps_accuracy']) ?>">
                 <?= $err('location') ?>
+                <?php if (isset($e['outside'])): ?>
+                    <a class="btn btn-sm btn-outline-danger mt-2" href="<?= url('hotlines.php') ?>"><i class="bi bi-telephone-fill me-1"></i>Emergency hotlines</a>
+                <?php endif; ?>
+                <!-- shown by js when the pin lands outside the barangay -->
+                <div class="alert alert-warning small mt-2 mb-0 d-none" id="areaWarn" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i><span id="areaWarnText"></span>
+                    <a class="alert-link d-inline-block ms-1" href="<?= url('hotlines.php') ?>">See emergency hotlines</a>
+                </div>
                 <label class="form-label mt-3" for="landmark">Landmark <span class="text-secondary fw-normal">(helps responders find it)</span></label>
                 <input class="form-control<?= isset($e['landmark']) ? ' is-invalid' : '' ?>" id="landmark" name="landmark" maxlength="150" placeholder="Example: beside the basketball court" value="<?= e($d['landmark']) ?>">
                 <?= $err('landmark') ?>
@@ -159,19 +173,55 @@ function render_report_form($types, $d, $e, $guest) {
 }
 
 function report_form_scripts() {
-    $lat = BRGY_LAT; $lng = BRGY_LNG;
+    $lat = BRGY_LAT; $lng = BRGY_LNG; $radius = SERVICE_RADIUS_M;
     return <<<HTML
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-KALASAG.pinPicker({ map: 'pickMap', lat: 'lat', lng: 'lng', acc: 'acc', locate: 'locateBtn', note: 'pinNote', center: [{$lat}, {$lng}], autoLocate: true });
-// stop sending without a pin, the server checks too
+const BRGY = [{$lat}, {$lng}], RADIUS = {$radius};
+const latEl = document.getElementById('lat'), lngEl = document.getElementById('lng');
+const warn = document.getElementById('areaWarn');
+
+// same haversine as the php side, so the warning matches what the server will do
+function metersFromBrgy(lat, lng) {
+    const r = x => x * Math.PI / 180;
+    const dLat = r(lat - BRGY[0]), dLng = r(lng - BRGY[1]);
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(r(BRGY[0])) * Math.cos(r(lat)) * Math.sin(dLng / 2) ** 2;
+    return 2 * 6371000 * Math.asin(Math.sqrt(h));
+}
+function outsideArea() {
+    if (!latEl.value) return false;
+    return metersFromBrgy(+latEl.value, +lngEl.value) > RADIUS;
+}
+// warn right away when the pin lands outside, so they can call the hotlines instead of waiting
+function checkArea() {
+    if (outsideArea()) {
+        const m = metersFromBrgy(+latEl.value, +lngEl.value);
+        const away = m < 1000 ? Math.round(m / 10) * 10 + ' m' : (m / 1000).toFixed(1) + ' km';
+        document.getElementById('areaWarnText').textContent = 'This location is outside Barangay 172 (about ' + away + ' away), so it can\'t be sent here. For emergencies elsewhere, call the hotlines right away.';
+        warn.classList.remove('d-none');
+    } else {
+        warn.classList.add('d-none');
+    }
+}
+// listen before the picker starts so a saved pin gets checked too
+latEl.addEventListener('change', checkArea);
+
+const map = KALASAG.pinPicker({ map: 'pickMap', lat: 'lat', lng: 'lng', acc: 'acc', locate: 'locateBtn', note: 'pinNote', center: BRGY, autoLocate: true });
+// dashed circle so people can see the area we cover
+L.circle(BRGY, { radius: RADIUS, color: '#7A4A2A', weight: 2, dashArray: '6 6', fill: true, fillOpacity: 0.04, interactive: false }).addTo(map);
+
+// stop sending without a pin or with a pin outside, the server checks both too
 document.getElementById('reportForm').addEventListener('submit', e => {
-    if (!document.getElementById('lat').value) {
+    if (!latEl.value) {
         e.preventDefault();
         const n = document.getElementById('pinNote');
         n.textContent = 'Set the location first: tap "Use my location" or tap the map.';
         n.classList.add('text-danger');
         n.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else if (outsideArea()) {
+        e.preventDefault();
+        checkArea();
+        warn.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 });
 </script>

@@ -136,7 +136,7 @@ include __DIR__ . '/../includes/header.php';
         <section class="panel">
             <div class="panel-head"><h2>Teams <span class="count-pill"><?= count($teams) ?></span></h2></div>
             <?php if (!$teams): ?>
-                <div class="empty"><i class="bi bi-people" style="color:var(--muted)"></i>No responder teams yet. Add the barangay's teams (BPAT, tanod, rescue, BHERT) using the form.</div>
+                <div class="empty"><i class="bi bi-people" style="color:var(--muted)"></i>No responder teams yet. Add the barangay's teams (BDRRM team, Barangay Health Workers, Tanod/BPAT) using the form.</div>
             <?php else: ?>
                 <div class="table-wrap">
                     <table class="table data-table">
@@ -185,7 +185,7 @@ include __DIR__ . '/../includes/header.php';
                     <input type="hidden" name="action" value="<?= $edit_id ? 'update' : 'create' ?>">
                     <input type="hidden" name="responder_id" value="<?= $edit_id ?>">
                     <div class="mb-3"><label class="form-label" for="team_name">Team name</label>
-                        <input class="form-control<?= $inv('team_name') ?>" id="team_name" name="team_name" maxlength="80" placeholder="Example: BPAT Team 1" value="<?= e($d['team_name']) ?>"><?= $err('team_name') ?></div>
+                        <input class="form-control<?= $inv('team_name') ?>" id="team_name" name="team_name" maxlength="80" placeholder="Example: BDRRM Team" value="<?= e($d['team_name']) ?>"><?= $err('team_name') ?></div>
                     <div class="mb-3"><label class="form-label" for="full_name">Team leader / contact person</label>
                         <input class="form-control<?= $inv('full_name') ?>" id="full_name" name="full_name" maxlength="120" value="<?= e($d['full_name']) ?>"><?= $err('full_name') ?></div>
                     <div class="mb-3"><label class="form-label" for="contact_no">Team mobile number</label>
