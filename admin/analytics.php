@@ -49,9 +49,10 @@ $mrows = $conn->query("SELECT DATE_FORMAT(date_reported, '%Y-%m') AS ym, COUNT(*
         WHERE date_reported >= DATE_FORMAT(NOW() - INTERVAL 11 MONTH, '%Y-%m-01') GROUP BY ym")->fetch_all(MYSQLI_ASSOC);
 foreach ($mrows as $r) if (isset($months[$r['ym']])) $months[$r['ym']] = (int)$r['n'];
 
+// cleared = jobs the team itself marked cleared, not ones auto-closed when the barangay resolved it
 $teams = all($conn, "SELECT rp.team_name, COUNT(r.response_id) AS jobs,
         ROUND(AVG(TIMESTAMPDIFF(MINUTE, r.dispatched_at, r.arrived_at))) AS to_arrive,
-        COALESCE(SUM(r.cleared_at IS NOT NULL), 0) AS cleared
+        COALESCE(SUM(r.action_taken IS NOT NULL), 0) AS cleared
     FROM responders rp LEFT JOIN incident_responses r ON r.responder_id = rp.responder_id AND r.dispatched_at >= ?
     GROUP BY rp.responder_id ORDER BY jobs DESC, rp.team_name", $since);
 
@@ -137,7 +138,7 @@ include __DIR__ . '/../includes/header.php';
                 <div class="table-wrap"><table class="table data-table">
                     <thead><tr><th>#</th><th>Date</th><th>Type</th><th>Landmark</th><th>Priority</th><th>Status</th></tr></thead>
                     <tbody><?php foreach ($recent as $r): ?>
-                        <tr><td><a href="<?= url('admin/incident.php?id=' . (int)$r['incident_id']) ?>"><?= (int)$r['incident_id'] ?></a></td>
+                        <tr><td class="text-nowrap"><a href="<?= url('admin/incident.php?id=' . (int)$r['incident_id']) ?>"><?= (int)$r['incident_id'] ?></a></td>
                             <td class="text-nowrap"><?= e(date('M j, Y g:i A', strtotime($r['date_reported']))) ?></td>
                             <td><?= e($r['type_name']) ?></td><td><?= e($r['landmark'] ?: '') ?></td>
                             <td><?= $r['is_priority'] ? 'Yes' : '' ?></td><td><?= e(status_label($r['status'])) ?></td></tr>
@@ -148,12 +149,12 @@ include __DIR__ . '/../includes/header.php';
     </div>
 </div>
 <?php
-$m_labels = json_encode(array_map(fn($ym) => date('M Y', strtotime($ym . '-01')), array_keys($months)));
-$m_data = json_encode(array_values($months));
-$t_labels = json_encode(array_column($by_type, 'type_name'));
-$t_data = json_encode(array_map('intval', array_column($by_type, 'n')));
-$s_labels = json_encode(array_map('status_label', STATUSES));
-$s_data = json_encode(array_values($by_status));
+$m_labels = js_json(array_map(fn($ym) => date('M Y', strtotime($ym . '-01')), array_keys($months)));
+$m_data = js_json(array_values($months));
+$t_labels = js_json(array_column($by_type, 'type_name'));
+$t_data = js_json(array_map('intval', array_column($by_type, 'n')));
+$s_labels = js_json(array_map('status_label', STATUSES));
+$s_data = js_json(array_values($by_status));
 $extra_scripts = <<<HTML
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
 <script>

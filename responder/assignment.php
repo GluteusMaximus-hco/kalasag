@@ -21,7 +21,8 @@ $iid = (int)$job['incident_id'];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
     $action = $_POST['action'] ?? '';
-    if ($action === 'arrived' && !$job['arrived_at']) {
+    // a job the barangay already closed cant be arrived at or messaged anymore
+    if ($action === 'arrived' && !$job['arrived_at'] && !$job['cleared_at']) {
         $conn->query("UPDATE incident_responses SET arrived_at = NOW() WHERE response_id = $rid");
         add_message($conn, $iid, $u['user_id'], 'responder', $job['team_name'] . ' has arrived at the location.');
         flash('success', 'Marked as arrived. The barangay and the reporter can see it.');
@@ -36,12 +37,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $st->bind_param('si', $notes, $rid);
         $st->execute();
         // team is free again if this was their last open job
+        // only if they were deployed, an off duty team stays off duty
         $conn->query("UPDATE responders SET availability = 'available' WHERE responder_id = " . (int)$job['team_id'] . "
-                      AND NOT EXISTS (SELECT 1 FROM incident_responses WHERE responder_id = " . (int)$job['team_id'] . " AND cleared_at IS NULL)");
+                      AND availability = 'deployed' AND NOT EXISTS (SELECT 1 FROM incident_responses WHERE responder_id = " . (int)$job['team_id'] . " AND cleared_at IS NULL)");
         $conn->commit();
         flash('success', 'Cleared. The barangay will close the report once everything is done.');
         redirect('responder/home.php');
-    } elseif ($action === 'message') {
+    } elseif ($action === 'message' && !$job['cleared_at']) {
         $msg = trim($_POST['message'] ?? '');
         if ($msg !== '' && mb_strlen($msg) <= 1000) { add_message($conn, $iid, $u['user_id'], 'responder', $msg); flash('success', 'Message sent.'); }
     }
@@ -89,7 +91,7 @@ include __DIR__ . '/../includes/header.php';
                             <span class="label"><?= $lbl ?></span><span class="when"><?= $t ? e(date('g:i A', strtotime($t))) : '' ?></span></li>
                     <?php endforeach; ?>
                 </ol>
-                <?php if (!$job['arrived_at']): ?>
+                <?php if (!$job['arrived_at'] && !$job['cleared_at']): ?>
                     <form method="post" class="mt-3"><?= csrf_field() ?><input type="hidden" name="action" value="arrived">
                         <button class="btn btn-sienna btn-lg w-100" type="submit"><i class="bi bi-geo-alt-fill me-1"></i>We've arrived</button></form>
                 <?php endif; ?>
@@ -99,7 +101,11 @@ include __DIR__ . '/../includes/header.php';
                         <textarea class="form-control mb-2" id="action_taken" name="action_taken" rows="3" maxlength="1000" placeholder="Example: Moved 2 families to Malibay Plaza, no injuries" required></textarea>
                         <button class="btn btn-umber w-100" type="submit" data-confirm="Mark this job as cleared?">Mark as cleared</button></form>
                 <?php else: ?>
-                    <p class="small mt-3 mb-0"><strong>Action taken:</strong> <?= e($job['action_taken']) ?></p>
+                    <?php if ($job['action_taken'] !== null): ?>
+                        <p class="small mt-3 mb-0"><strong>Action taken:</strong> <?= e($job['action_taken']) ?></p>
+                    <?php else: ?>
+                        <p class="small text-secondary mt-3 mb-0">The barangay closed this incident before the team marked it cleared.</p>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
         </section>

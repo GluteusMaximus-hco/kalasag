@@ -34,10 +34,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $new = $_POST['status'] ?? '';
             $remarks = trim($_POST['remarks'] ?? '');
             // dispatched only happens through the dispatch panel so a team is always attached
-            if (!in_array($new, ['pending', 'acknowledged', 'resolved', 'cancelled'], true) || $new === $old) {
-                flash('warning', 'Pick a different status.');
+            // picking the current status = just post a remark (status stays the same)
+            if ($new !== $old && !in_array($new, ['pending', 'acknowledged', 'resolved', 'cancelled'], true)) {
+                flash('warning', 'Pick a status.');
             } elseif (mb_strlen($remarks) > 500) {
                 flash('danger', 'Keep the remarks under 500 characters.');
+            } elseif ($new === $old) {
+                if ($remarks === '') {
+                    flash('warning', 'Write a remark, or pick a new status.');
+                } else {
+                    log_status($conn, $id, $u['user_id'], $old, $old, $remarks);
+                    flash('success', 'Remark added.');
+                }
             } else {
                 $conn->begin_transaction();
                 $resolved = $new === 'resolved' ? date('Y-m-d H:i:s') : null;
@@ -45,7 +53,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $st->bind_param('ssi', $new, $resolved, $id);
                 $st->execute();
                 log_status($conn, $id, $u['user_id'], $old, $new, $remarks === '' ? null : $remarks);
-                if (in_array($new, ['resolved', 'cancelled'], true)) free_responders($conn, $id);
+                // closing it, or pulling it back from dispatched, sends the teams home
+                if (in_array($new, ['resolved', 'cancelled'], true) || $old === 'dispatched') free_responders($conn, $id);
                 $conn->commit();
                 flash('success', 'Status changed to ' . status_label($new) . '.');
             }
@@ -59,6 +68,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 flash('danger', 'That responder team was not found.');
             } elseif (in_array($old, ['resolved', 'cancelled'], true)) {
                 flash('warning', 'Reopen the incident before dispatching a team.');
+            } elseif (($chk = $conn->prepare('SELECT 1 FROM incident_responses WHERE incident_id = ? AND responder_id = ? AND cleared_at IS NULL'))
+                      && $chk->bind_param('ii', $id, $rid) && $chk->execute() && $chk->get_result()->num_rows) {
+                // two admin tabs open, or a double click
+                flash('warning', $team['team_name'] . ' is already on this incident.');
             } else {
                 $conn->begin_transaction();
                 $st = $conn->prepare('INSERT INTO incident_responses (incident_id, responder_id, assigned_by) VALUES (?, ?, ?)');
@@ -113,7 +126,8 @@ $st = $conn->prepare("SELECT r.*, rp.team_name, rp.contact_no FROM incident_resp
 $st->bind_param('i', $id);
 $st->execute();
 $responses = $st->get_result()->fetch_all(MYSQLI_ASSOC);
-$on_scene = array_column($responses, 'responder_id');
+// teams still working this incident, cleared ones can be dispatched again if it gets reopened
+$on_scene = array_column(array_filter($responses, fn($r) => $r['cleared_at'] === null), 'responder_id');
 
 // teams that handle this type first, then available ones first
 $st = $conn->prepare("SELECT rp.responder_id, rp.team_name, rp.availability,
@@ -184,12 +198,14 @@ include __DIR__ . '/../includes/header.php';
                 <form method="post">
                     <?= csrf_field() ?>
                     <input type="hidden" name="action" value="status">
-                    <label class="form-label" for="newStatus">New status</label>
+                    <label class="form-label" for="newStatus">Status</label>
                     <select class="form-select mb-2" id="newStatus" name="status">
+                        <option value="<?= e($inc['status']) ?>" selected>Keep as <?= e(status_label($inc['status'])) ?> (just add a remark)</option>
                         <?php foreach (['acknowledged' => 'Acknowledged', 'resolved' => 'Resolved', 'cancelled' => 'Cancelled (false or duplicate report)', 'pending' => 'Back to pending'] as $k => $lbl): ?>
                             <?php if ($k !== $inc['status']): ?><option value="<?= $k ?>"><?= e($lbl) ?></option><?php endif; ?>
                         <?php endforeach; ?>
                     </select>
+                    <?php if ($inc['status'] === 'dispatched'): ?><div class="form-text mt-0 mb-2">Moving it back to acknowledged or pending calls the teams back.</div><?php endif; ?>
                     <label class="form-label" for="remarks">Remarks <span class="text-secondary fw-normal">(the reporter sees this)</span></label>
                     <input class="form-control mb-3" id="remarks" name="remarks" maxlength="500" placeholder="Example: Team checked, water is going down">
                     <button class="btn btn-umber w-100" type="submit">Save status</button>

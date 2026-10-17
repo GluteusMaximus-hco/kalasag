@@ -31,7 +31,8 @@
         function set(p, acc) {
             latEl.value = (+p.lat).toFixed(7);
             lngEl.value = (+p.lng).toFixed(7);
-            if (accEl) accEl.value = acc == null ? '' : Math.round(acc);
+            // empty = pinned by hand, so dont turn it into 0 m
+            if (accEl) accEl.value = (acc == null || acc === '') ? '' : Math.round(acc);
             latEl.dispatchEvent(new Event('change'));
         }
         if (latEl.value && lngEl.value) place(start, accEl ? accEl.value : null);
@@ -118,6 +119,11 @@
     function autoscroll() {
         document.querySelectorAll('[data-autoscroll]').forEach(el => el.scrollTop = el.scrollHeight);
     }
+
+    // coming back with the browser Back button shows the old page from cache with the button still locked
+    window.addEventListener('pageshow', e => {
+        if (e.persisted) document.querySelectorAll('.is-busy').forEach(b => { b.disabled = false; b.classList.remove('is-busy'); });
+    });
 
     window.KALASAG = { pinPicker, miniMaps };
     document.addEventListener('DOMContentLoaded', () => { photoPreviews(); confirms(); oneSubmit(); autoscroll(); miniMaps(); });

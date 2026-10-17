@@ -75,7 +75,7 @@ include __DIR__ . '/../includes/header.php';
                     <div class="q-icon" style="background:var(--st-resolved)"><i class="bi <?= e($d['icon_name']) ?>"></i></div>
                     <div class="min-w-0">
                         <span class="q-title"><?= e($d['type_name']) ?> #<?= (int)$d['incident_id'] ?></span>
-                        <div class="q-desc"><?= e($d['action_taken'] ?: '') ?></div>
+                        <div class="q-desc"><?= e($d['action_taken'] ?? 'Closed by the barangay') ?></div>
                         <div class="q-meta"><span>Cleared <?= e(time_ago($d['cleared_at'])) ?></span></div>
                     </div>
                 </a></li>

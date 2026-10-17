@@ -169,7 +169,7 @@ include __DIR__ . '/includes/header.php';
                         <div class="col-sm-6">
                             <label class="form-label" for="contact_no">Mobile number</label>
                             <input class="form-control<?= finv($P,'contact_no') ?>" id="contact_no" name="contact_no" inputmode="numeric" placeholder="09XXXXXXXXX" value="<?= e($form['contact_no']) ?>" autocomplete="tel" required>
-                            <?= ferr($P, 'contact_no') ?: '<div class="form-text">Used for SMS updates about your reports.</div>' ?>
+                            <?= ferr($P, 'contact_no') ?: '<div class="form-text">So the barangay can call or text you about your reports.</div>' ?>
                         </div>
                         <div class="col-sm-6">
                             <label class="form-label" for="email">Email <span class="text-secondary fw-normal">(optional)</span></label>

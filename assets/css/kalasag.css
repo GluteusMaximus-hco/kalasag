@@ -37,6 +37,12 @@
 }
 
 body { font-size: 0.95rem; }
+/* long words or links people type with no spaces (mahabangsalitaaaa...) wrap instead of
+   stretching the page sideways on phones */
+body { overflow-wrap: anywhere; }
+.pagination { flex-wrap: wrap; }
+/* ...but never chop up short labels, numbers, badges, or buttons */
+.steps, .badge, .btn, .st, .urg, .prio-flag, .avail, th, .nav-link, .stat, .situation, .brand-name, .page-title, h1, h2 { overflow-wrap: normal; }
 
 h1, h2, h3, .h-cond {
     font-family: var(--font-head);
@@ -106,7 +112,8 @@ h1, h2, h3, .h-cond {
 
 .sidebar-nav { padding: 1rem 0.75rem; display: flex; flex-direction: column; gap: 2px; flex: 1; overflow-y: auto; }
 
-.nav-item {
+/* scoped to the sidebar so bootstrap's tabs/pills (also .nav-item) dont get the sidebar look */
+.sidebar-nav .nav-item {
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -117,19 +124,9 @@ h1, h2, h3, .h-cond {
     font-weight: 500;
     border-left: 3px solid transparent;
 }
-.nav-item i { font-size: 1.05rem; width: 1.2rem; text-align: center; }
-.nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
-.nav-item.active { background: var(--umber-2); color: #fff; border-left-color: var(--gold); }
-.nav-item.disabled { opacity: 0.45; cursor: default; }
-.nav-item.disabled:hover { background: none; color: #D9C8B0; }
-.nav-item small {
-    margin-left: auto;
-    font-size: 0.68rem;
-    border: 1px solid rgba(255,255,255,0.25);
-    border-radius: 4px;
-    padding: 0 5px;
-}
-
+.sidebar-nav .nav-item i { font-size: 1.05rem; width: 1.2rem; text-align: center; }
+.sidebar-nav .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+.sidebar-nav .nav-item.active { background: var(--umber-2); color: #fff; border-left-color: var(--gold); }
 .sidebar-foot { padding: 1rem 1.25rem 1.4rem; }
 .hotline {
     display: flex;
@@ -297,6 +294,7 @@ h1, h2, h3, .h-cond {
     box-shadow: 0 2px 6px rgba(28, 17, 11, 0.35);
 }
 .evac-pin.closed { background: var(--st-cancelled); }
+.evac-pin.full { background: var(--st-dispatched); }   /* full is not closed, people can still go there for help */
 
 .leaflet-popup-content { font-family: var(--font-body); font-size: 0.85rem; margin: 0.8rem 1rem; }
 .popup-title { font-family: var(--font-head); font-size: 1.15rem; font-weight: 700; margin-bottom: 0.25rem; }
@@ -637,7 +635,7 @@ a:hover { color: var(--sienna); }
 .count-pill { display: inline-block; min-width: 1.6rem; padding: 0 0.45rem; border-radius: 999px; background: var(--gold-soft); color: #6B4410; font-weight: 700; font-size: 0.75rem; text-align: center; }
 
 /* ---------- detail lists ---------- */
-.kv { display: grid; grid-template-columns: 130px 1fr; gap: 0.35rem 1rem; font-size: 0.9rem; margin: 0; }
+.kv { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 0.35rem 1rem; font-size: 0.9rem; margin: 0; }
 .kv dt { color: var(--muted); font-weight: 600; }
 .kv dd { margin: 0; }
 

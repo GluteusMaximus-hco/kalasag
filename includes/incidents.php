@@ -79,6 +79,28 @@ function save_photos($conn, $incident_id, $files) {
         if (function_exists('imagecreatefromstring')) {
             $img = @imagecreatefromstring(file_get_contents($tmp));
             if ($img) {
+                // phones save portrait photos sideways + an "orientation" tag, we drop the tag below
+                // so rotate the actual pixels first or the photo shows up sideways
+                if ($mime === 'image/jpeg' && function_exists('exif_read_data')) {
+                    $exif = @exif_read_data($tmp);
+                    switch ((int)($exif['Orientation'] ?? 1)) {
+                        case 2: imageflip($img, IMG_FLIP_HORIZONTAL); break;
+                        case 3: $img = imagerotate($img, 180, 0); break;
+                        case 4: imageflip($img, IMG_FLIP_VERTICAL); break;
+                        case 5: imageflip($img, IMG_FLIP_HORIZONTAL); $img = imagerotate($img, 90, 0); break;
+                        case 6: $img = imagerotate($img, -90, 0); break;
+                        case 7: imageflip($img, IMG_FLIP_HORIZONTAL); $img = imagerotate($img, -90, 0); break;
+                        case 8: $img = imagerotate($img, 90, 0); break;
+                    }
+                }
+                // see-through png/webp would turn black as jpg, so paint it on white first
+                if ($mime !== 'image/jpeg') {
+                    $bg = imagecreatetruecolor(imagesx($img), imagesy($img));
+                    imagefill($bg, 0, 0, imagecolorallocate($bg, 255, 255, 255));
+                    imagecopy($bg, $img, 0, 0, 0, 0, imagesx($img), imagesy($img));
+                    imagedestroy($img);
+                    $img = $bg;
+                }
                 // shrink big phone photos so they load fast on mobile data
                 $w = imagesx($img); $h = imagesy($img); $max = 1600;
                 if ($w > $max || $h > $max) {
@@ -151,6 +173,8 @@ function my_resident_id($conn, $user_id) {
 // can this person see this incident? admin sees all, resident sees own, responder sees assigned,
 // guests see the ones they unlocked with a tracking code this session
 function can_view_incident($conn, $u, $incident_id) {
+    // a code they unlocked on track.php works even if they're logged in (like a resident who reported as a guest before signing up)
+    if (in_array((int)$incident_id, $_SESSION['guest_incidents'] ?? [], true)) return true;
     if ($u && $u['role'] === 'admin') return true;
     if ($u && $u['role'] === 'resident') {
         $rid = my_resident_id($conn, $u['user_id']);
@@ -215,6 +239,17 @@ function add_message($conn, $incident_id, $sender_id, $sender_type, $text) {
     $st = $conn->prepare('INSERT INTO incident_messages (incident_id, sender_id, sender_type, message) VALUES (?, ?, ?, ?)');
     $st->bind_param('iiss', $incident_id, $sender_id, $sender_type, $text);
     $st->execute();
+}
+
+// changes whenever a report, status, dispatch, or team availability changes
+// the dashboard compares it to know when its lists (not just the map) are out of date
+function dashboard_version($conn) {
+    return $conn->query("SELECT CONCAT(
+            (SELECT COALESCE(MAX(incident_id), 0) FROM incidents), '-',
+            (SELECT COALESCE(MAX(log_id), 0) FROM incident_status_log), '-',
+            (SELECT COALESCE(MAX(response_id), 0) FROM incident_responses), '-',
+            (SELECT COUNT(*) FROM incident_responses WHERE cleared_at IS NULL), '-',
+            (SELECT COALESCE(SUM(availability = 'available'), 0) FROM responders)) AS v")->fetch_assoc()['v'];
 }
 
 function fmt_meters($m) {

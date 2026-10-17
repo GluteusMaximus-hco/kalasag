@@ -16,7 +16,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     if ($action === 'message') {
         $msg = trim($_POST['message'] ?? '');
-        if ($msg === '' || mb_strlen($msg) > 1000) {
+        $now = load_incident($conn, $id);
+        if (in_array($now['status'], ['resolved', 'cancelled'], true)) {
+            // the form is hidden when closed, this catches an old tab left open
+            flash('warning', 'This report is closed. Send a new report if something else happens.');
+        } elseif ($msg === '' || mb_strlen($msg) > 1000) {
             flash('danger', 'Write a message under 1000 characters.');
         } else {
             add_message($conn, $id, $u['user_id'], 'resident', $msg);
@@ -24,11 +28,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } elseif ($action === 'cancel') {
         // only allowed while nobody has picked it up yet
-        $inc = load_incident($conn, $id);
-        if ($inc['status'] === 'pending') {
-            $st = $conn->prepare("UPDATE incidents SET status = 'cancelled' WHERE incident_id = ?");
-            $st->bind_param('i', $id);
-            $st->execute();
+        // the WHERE status='pending' makes sure the admin didnt pick it up a second ago
+        $st = $conn->prepare("UPDATE incidents SET status = 'cancelled' WHERE incident_id = ? AND status = 'pending'");
+        $st->bind_param('i', $id);
+        $st->execute();
+        if ($st->affected_rows === 1) {
             log_status($conn, $id, $u['user_id'], 'pending', 'cancelled', 'Cancelled by the resident');
             flash('success', 'Report cancelled.');
         } else {

@@ -12,12 +12,13 @@ elseif (in_array($status, STATUSES, true)) { $where[] = 'i.status = ?'; $types .
 if ((int)($_GET['type'] ?? 0)) { $where[] = 'i.type_id = ?'; $types .= 'i'; $args[] = (int)$_GET['type']; }
 if (isset($_GET['prio'])) $where[] = 'i.is_priority = 1';
 foreach (['from' => ['>=', ' 00:00:00'], 'to' => ['<=', ' 23:59:59']] as $k => [$op, $time]) {
-    if (!empty($_GET[$k]) && DateTime::createFromFormat('Y-m-d', $_GET[$k])) { $where[] = "i.date_reported $op ?"; $types .= 's'; $args[] = $_GET[$k] . $time; }
+    if (!empty($_GET[$k]) && valid_date($_GET[$k])) { $where[] = "i.date_reported $op ?"; $types .= 's'; $args[] = $_GET[$k] . $time; }
 }
 if (trim($_GET['q'] ?? '') !== '') {
     $like = '%' . trim($_GET['q']) . '%';
-    $where[] = "(i.description LIKE ? OR i.landmark LIKE ? OR CONCAT(r.first_name,' ',r.last_name) LIKE ? OR g.guest_name LIKE ? OR g.tracking_code LIKE ?)";
-    $types .= 'sssss'; array_push($args, $like, $like, $like, $like, $like);
+    // same search as the incidents page so the csv matches what the admin sees
+    $where[] = "(i.description LIKE ? OR i.landmark LIKE ? OR CONCAT(r.first_name,' ',r.last_name) LIKE ? OR g.guest_name LIKE ? OR g.tracking_code LIKE ? OR i.incident_id = ?)";
+    $types .= 'sssssi'; array_push($args, $like, $like, $like, $like, $like, (int)ltrim(trim($_GET['q']), '#'));
 }
 
 $st = $conn->prepare("SELECT i.incident_id, i.date_reported, t.type_name, i.status, i.is_priority, u.urgency,

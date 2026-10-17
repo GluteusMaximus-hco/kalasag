@@ -1,6 +1,7 @@
 <?php
 // json feed for the live map, the dashboard calls this every 30 secs
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/incidents.php';
 header('Content-Type: application/json');
 
 $u = current_user();
@@ -47,6 +48,7 @@ try {
         'centers'   => $centers,
         'counts'    => array_map('intval', $counts),
         'updated'   => date('g:i A'),
+        'version'   => dashboard_version($conn),
     ]);
 } catch (mysqli_sql_exception $ex) {
     error_log('map feed: ' . $ex->getMessage());
