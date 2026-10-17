@@ -22,7 +22,7 @@ Stack: PHP 8 + MySQLi (no framework), MySQL/MariaDB, Bootstrap 5, Leaflet.js + O
 | Front end (every screen, desktop + phone) | Done |
 | Core back end (saving, roles, reports, dispatch, analytics) | Done |
 | Forgot password by email | Done, waiting for the barangay's official Gmail |
-| Emergency hotlines page | Done, waiting for the official numbers from the barangay |
+| Emergency hotlines page | Done, numbers from the official Barangay 172 hotline sign |
 | SMS notifications (Android phone + barangay SIM) | Back-end review |
 | Email notifications | Back-end review |
 | Online hosting with domain + HTTPS | Before the final defense |
@@ -145,9 +145,9 @@ The Gmail goes in MAIL_USERNAME and the 16-letter app password (no spaces) goes 
 
 ## Emergency hotlines
 
-**Status:** waiting for the official hotline numbers from Barangay 172.
+The numbers in `config/hotlines.php` are copied from the official Barangay 172 Zone 17 emergency hotline sign: the barangay hotline (Smart and Globe), Pasay City DRRMO, BFP Pasay, PNP, Police Sub Station 6, Pasay City General Hospital, City Health Office, Pasay City Traffic, Meralco, and Maynilad.
 
-The numbers will be added to `config/hotlines.php` once the barangay provides them through our questionnaire. Until then, the hotlines page shows that the numbers are not yet available. Only official numbers from the barangay will be used, since a wrong hotline is dangerous during an emergency.
+Two numbers on the sign were hard to read and are not added yet (listed in the comments of `config/hotlines.php`). They will be added once the barangay confirms them. Only official numbers are used, since a wrong hotline is dangerous during an emergency.
 
 ## Blocking direct access to photos
 
