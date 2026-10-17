@@ -26,7 +26,8 @@ function render_timeline($timeline, $status) {
     <ol class="steps">
         <?php foreach ($steps as $key => $label):
             $i = array_search($key, $order, true);
-            $done = $cur !== false && $i <= $cur; ?>
+            // only steps that really happened get a check (pending -> resolved skips the middle ones)
+            $done = $cur !== false && $i <= $cur && ($i === $cur || isset($when[$key])); ?>
             <li class="<?= $done ? 'done' : '' ?> <?= $cur === $i ? 'current' : '' ?>">
                 <span class="dot"><?= $done ? '<i class="bi bi-check-lg"></i>' : '' ?></span>
                 <span class="label"><?= e($label) ?></span>
@@ -39,7 +40,7 @@ function render_timeline($timeline, $status) {
             <?php foreach (array_reverse($timeline) as $t): ?>
                 <li>
                     <time datetime="<?= e($t['changed_at']) ?>"><?= e(time_ago($t['changed_at'])) ?></time>
-                    <div><?= badge_status($t['new_status']) ?>
+                    <div><?= $t['old_status'] === $t['new_status'] ? '<span class="badge text-bg-light border">Update</span>' : badge_status($t['new_status']) ?>
                         <?php if ($t['remarks']): ?><div class="small mt-1"><?= e($t['remarks']) ?></div><?php endif; ?>
                         <div class="text-secondary small"><?= $t['who'] !== 'System' ? 'by ' . e($t['who']) : '' ?></div>
                     </div>

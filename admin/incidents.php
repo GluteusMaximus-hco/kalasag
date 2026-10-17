@@ -27,12 +27,12 @@ elseif (in_array($f['status'], STATUSES, true)) { $where[] = 'i.status = ?'; $ty
 else $f['status'] = 'all';
 if ($f['type']) { $where[] = 'i.type_id = ?'; $types_str .= 'i'; $args[] = $f['type']; }
 if ($f['prio']) $where[] = 'i.is_priority = 1';
-if (DateTime::createFromFormat('Y-m-d', $f['from'])) { $where[] = 'i.date_reported >= ?'; $types_str .= 's'; $args[] = $f['from'] . ' 00:00:00'; } else $f['from'] = '';
-if (DateTime::createFromFormat('Y-m-d', $f['to']))   { $where[] = 'i.date_reported <= ?'; $types_str .= 's'; $args[] = $f['to'] . ' 23:59:59'; } else $f['to'] = '';
+if (valid_date($f['from'])) { $where[] = 'i.date_reported >= ?'; $types_str .= 's'; $args[] = $f['from'] . ' 00:00:00'; } else $f['from'] = '';
+if (valid_date($f['to']))   { $where[] = 'i.date_reported <= ?'; $types_str .= 's'; $args[] = $f['to'] . ' 23:59:59'; } else $f['to'] = '';
 if ($f['q'] !== '') {
     $where[] = "(i.description LIKE ? OR i.landmark LIKE ? OR CONCAT(r.first_name,' ',r.last_name) LIKE ? OR g.guest_name LIKE ? OR g.tracking_code LIKE ? OR i.incident_id = ?)";
     $like = '%' . $f['q'] . '%';
-    $types_str .= 'sssssi'; array_push($args, $like, $like, $like, $like, $like, (int)$f['q']);
+    $types_str .= 'sssssi'; array_push($args, $like, $like, $like, $like, $like, (int)ltrim($f['q'], '#'));   // "12" or "#12" finds report 12
 }
 $w = implode(' AND ', $where);
 $from_sql = "FROM incidents i
@@ -124,7 +124,7 @@ include __DIR__ . '/../includes/header.php';
                 <tbody>
                     <?php foreach ($rows as $r): $href = url('admin/incident.php?id=' . (int)$r['incident_id']); ?>
                         <tr class="clickable" onclick="location.href='<?= $href ?>'">
-                            <td><a class="fw-semibold" href="<?= $href ?>"><?= (int)$r['incident_id'] ?></a></td>
+                            <td class="text-nowrap"><a class="fw-semibold" href="<?= $href ?>"><?= (int)$r['incident_id'] ?></a></td>
                             <td class="text-nowrap"><i class="bi <?= e($r['icon_name']) ?> me-1"></i><?= e($r['type_name']) ?></td>
                             <td class="text-nowrap"><?= e(date('M j, g:i A', strtotime($r['date_reported']))) ?><div class="small text-secondary"><?= e(time_ago($r['date_reported'])) ?></div></td>
                             <td><?= e($r['reporter']) ?><?= $r['is_guest'] ? ' <span class="badge text-bg-light border">guest</span>' : '' ?></td>

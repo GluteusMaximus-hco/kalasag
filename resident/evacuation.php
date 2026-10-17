@@ -82,8 +82,8 @@ include __DIR__ . '/../includes/header.php';
 </div>
 
 <?php
-$points_json = json_encode($points);
-$home_json = json_encode($home ? ['lat' => (float)$home['latitude'], 'lng' => (float)$home['longitude']] : null);
+$points_json = js_json($points);
+$home_json = js_json($home ? ['lat' => (float)$home['latitude'], 'lng' => (float)$home['longitude']] : null);
 $extra_scripts = <<<HTML
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -98,7 +98,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19,
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 CENTERS.forEach(c => {
-    L.marker([c.lat, c.lng], { icon: L.divIcon({ className: '', html: '<div class="evac-pin ' + (c.status === 'open' ? '' : 'closed') + '"><i class="bi bi-house-fill"></i></div>', iconSize: [28, 28], iconAnchor: [14, 14] }) })
+    L.marker([c.lat, c.lng], { icon: L.divIcon({ className: '', html: '<div class="evac-pin ' + (c.status === 'open' ? '' : esc(c.status)) + '"><i class="bi bi-house-fill"></i></div>', iconSize: [28, 28], iconAnchor: [14, 14] }) })
         .bindPopup('<div class="popup-title">' + esc(c.name) + '</div>' + esc(c.status) + ', fits about ' + esc(c.capacity))
         .addTo(map);
 });

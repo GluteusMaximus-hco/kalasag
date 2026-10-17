@@ -114,7 +114,7 @@ include __DIR__ . '/../includes/header.php';
                             <span><?= e(time_ago($n['date_posted'])) ?></span>
                         </div>
                         <h3 class="fs-5 fw-bold mb-1"><?= e($n['title']) ?></h3>
-                        <p class="mb-0 small"><?= e($n['body']) ?></p>
+                        <p class="mb-0 small"><?= nl2br(e($n['body'])) ?></p>
                     </article>
                 <?php endforeach; ?>
                 <?php if (!$news): ?><p class="text-secondary small mb-0">No announcements right now.</p><?php endif; ?>

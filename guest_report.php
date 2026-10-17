@@ -14,11 +14,11 @@ $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
+    // check the form first so what they typed stays on the page either way
+    [$errors, $d] = validate_report($_POST, $_FILES, $types, true);
     // basic spam guard: one guest report every 2 minutes per browser
     if (time() - ($_SESSION['guest_last_report'] ?? 0) < 120) {
         $errors['form'] = 'You just sent a report. Wait 2 minutes before sending another, or check it with your tracking code.';
-    } else {
-        [$errors, $d] = validate_report($_POST, $_FILES, $types, true);
     }
     if (!$errors) {
         try {

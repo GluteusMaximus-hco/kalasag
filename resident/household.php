@@ -134,7 +134,7 @@ include __DIR__ . '/../includes/header.php';
                         Barangay 172 collects your household address, map location, and whether anyone at home is elderly, a PWD, pregnant, or bedridden. This is only used to plan and prioritize emergency response. Only authorized barangay staff can see it, and it is handled under the Data Privacy Act of 2012 (RA 10173). You can update or ask the barangay to remove it anytime.
                     </div>
                     <div class="form-check">
-                        <input class="form-check-input<?= isset($errors['consent']) ? ' is-invalid' : '' ?>" type="checkbox" id="consent" name="consent" <?= $has ? 'checked' : '' ?> required>
+                        <input class="form-check-input<?= isset($errors['consent']) ? ' is-invalid' : '' ?>" type="checkbox" id="consent" name="consent" <?= ($has || !empty($_POST['consent'])) ? 'checked' : '' ?> required>
                         <label class="form-check-label small fw-semibold" for="consent">I agree to let the barangay use this information for emergency response.</label>
                     </div>
                     <?= $err('consent') ?>

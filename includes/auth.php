@@ -69,7 +69,24 @@ function show_flash() {
 }
 
 function current_user() {
-    return $_SESSION['user'] ?? null;
+    global $conn;
+    static $checked = false;
+    if (empty($_SESSION['user'])) return null;
+    // check the db once per page load, so an account the admin deactivates gets kicked out right away
+    // (otherwise they'd stay logged in until their session ends)
+    if (!$checked) {
+        $checked = true;
+        $st = $conn->prepare('SELECT is_active, role FROM users WHERE user_id = ?');
+        $st->bind_param('i', $_SESSION['user']['user_id']);
+        $st->execute();
+        $row = $st->get_result()->fetch_assoc();
+        if (!$row || !$row['is_active'] || $row['role'] !== $_SESSION['user']['role']) {
+            unset($_SESSION['user']);
+            flash('warning', 'This account is deactivated or no longer exists. Contact the barangay hall.');
+            return null;
+        }
+    }
+    return $_SESSION['user'];
 }
 
 // where each role lands after login
@@ -93,6 +110,18 @@ function require_role(...$roles) {
         redirect(home_for($u['role']));
     }
     return $u;
+}
+
+// json for inside a <script> tag, the HEX flags turn < > & ' " into \u codes
+// so text people typed (like an address with "</script>" in it) cant break out of the script block
+function js_json($v) {
+    return json_encode($v, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+}
+
+// strict YYYY-MM-DD check, createFromFormat alone lets "2026-02-31" through (it rolls over to March)
+function valid_date($s) {
+    $d = DateTime::createFromFormat('!Y-m-d', (string)$s);
+    return $d && $d->format('Y-m-d') === $s;
 }
 
 // "5 mins ago" style time for lists

@@ -143,7 +143,7 @@ include __DIR__ . '/../includes/header.php';
 </section>
 <?php
 if ($tab === 'households') {
-    $pts = json_encode(array_values(array_map(fn($h) => ['lat' => (float)$h['latitude'], 'lng' => (float)$h['longitude'], 'v' => (int)$h['vulnerability_score'], 'a' => $h['address'], 'f' => implode(', ', vuln_flags($h))],
+    $pts = js_json(array_values(array_map(fn($h) => ['lat' => (float)$h['latitude'], 'lng' => (float)$h['longitude'], 'v' => (int)$h['vulnerability_score'], 'a' => $h['address'], 'f' => implode(', ', vuln_flags($h))],
         array_filter($households, fn($h) => $h['latitude'] !== null))));
     $lat = BRGY_LAT; $lng = BRGY_LNG;
     $extra_scripts = <<<HTML

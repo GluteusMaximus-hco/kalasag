@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/incidents.php';
 $u = require_role('admin');
 
 $page_title = 'Dashboard';
@@ -36,7 +37,7 @@ try {
             GROUP BY t.type_id ORDER BY total DESC, t.type_name")->fetch_all(MYSQLI_ASSOC);
 
     // latest status changes
-    $activity = $conn->query("SELECT l.new_status, l.remarks, l.changed_at, t.type_name, l.incident_id,
+    $activity = $conn->query("SELECT l.old_status, l.new_status, l.remarks, l.changed_at, t.type_name, l.incident_id,
                 COALESCE(us.full_name, 'System') AS who
             FROM incident_status_log l
             JOIN incidents i ON i.incident_id = l.incident_id
@@ -110,7 +111,9 @@ include __DIR__ . '/../includes/header.php';
         <section class="panel h-100">
             <div class="panel-head">
                 <h2>Needs attention</h2>
-                <a class="hint fw-semibold" href="<?= url('admin/incidents.php') ?>">See all</a>
+                <!-- shows when new reports or updates came in after the page loaded -->
+                <a class="hint fw-semibold text-danger d-none" id="newUpdates" href="<?= url('admin/dashboard.php') ?>"><i class="bi bi-arrow-clockwise me-1"></i>New updates, reload</a>
+                <a class="hint fw-semibold" id="seeAll" href="<?= url('admin/incidents.php') ?>">See all</a>
             </div>
             <?php if (!$queue): ?>
                 <div class="empty"><i class="bi bi-check-circle-fill"></i>No active incidents right now.</div>
@@ -169,7 +172,8 @@ include __DIR__ . '/../includes/header.php';
                                 <time datetime="<?= e($a['changed_at']) ?>"><?= e(time_ago($a['changed_at'])) ?></time>
                                 <div>
                                     <strong><?= e($a['type_name']) ?> #<?= (int)$a['incident_id'] ?></strong>
-                                    marked <span class="st st-<?= e($a['new_status']) ?>"><?= e(status_label($a['new_status'])) ?></span>
+                                    <?php if ($a['old_status'] === $a['new_status']): ?>got an update
+                                    <?php else: ?>marked <span class="st st-<?= e($a['new_status']) ?>"><?= e(status_label($a['new_status'])) ?></span><?php endif; ?>
                                     <div class="text-secondary small"><?= e($a['remarks'] ?: '') ?> <?= $a['who'] !== 'System' ? 'by ' . e($a['who']) : '' ?></div>
                                 </div>
                             </li>
@@ -202,9 +206,11 @@ include __DIR__ . '/../includes/header.php';
 <?php
 $feed_url = url('api/map_incidents.php');
 $incident_url = url('admin/incident.php?id=');
-$chart_labels = json_encode(array_column($by_type, 'type_name'));
-$chart_data = json_encode(array_map('intval', array_column($by_type, 'total')));
-$colors_json = json_encode($status_colors);
+$chart_labels = js_json(array_column($by_type, 'type_name'));
+$chart_data = js_json(array_map('intval', array_column($by_type, 'total')));
+$colors_json = js_json($status_colors);
+$version_json = js_json(dashboard_version($conn));
+$login_url = url('login.php');
 
 $extra_scripts = <<<HTML
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -223,6 +229,8 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 const incidentLayer = L.layerGroup().addTo(map);
 const centerLayer = L.layerGroup().addTo(map);
 let firstLoad = true;
+const PAGE_VERSION = {$version_json};
+let openId = null;   // incident whose popup the admin has open, so the 30s refresh doesnt close it
 
 // escape text before putting it in popups
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -241,8 +249,14 @@ function pinIcon(inc) {
 
 function loadFeed() {
     fetch('{$feed_url}', { credentials: 'same-origin' })
-        .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(r => {
+            // logged out (session expired or account deactivated), go log in again instead of retrying forever
+            if (r.status === 401) { window.location = '{$login_url}'; throw new Error('401'); }
+            if (!r.ok) throw new Error(r.status);
+            return r.json();
+        })
         .then(data => {
+            const keepOpen = openId;
             incidentLayer.clearLayers();
             centerLayer.clearLayers();
             const bounds = [];
@@ -250,7 +264,7 @@ function loadFeed() {
             data.incidents.forEach(inc => {
                 const pos = [inc.latitude, inc.longitude];
                 bounds.push(pos);
-                L.marker(pos, { icon: pinIcon(inc), zIndexOffset: inc.status === 'resolved' ? 0 : 1000 })
+                const m = L.marker(pos, { icon: pinIcon(inc), zIndexOffset: inc.status === 'resolved' ? 0 : 1000 })
                     .bindPopup(
                         '<div class="popup-title">' + esc(inc.type_name) + ' #' + inc.incident_id + '</div>' +
                         '<span class="st st-' + esc(inc.status) + '">' + esc(inc.status_label) + '</span> ' +
@@ -258,14 +272,18 @@ function loadFeed() {
                         (inc.is_priority ? '<span class="prio-flag">Priority</span>' : '') +
                         '<p class="mb-1 mt-2">' + esc(inc.description) + '</p>' +
                         '<div class="text-secondary">' + esc(inc.landmark || 'No landmark') + ' &middot; ' + esc(inc.ago) + (inc.is_guest ? ' &middot; guest report' : '') + '</div>' +
-                        '<a class="d-inline-block mt-2 fw-semibold" href="{$incident_url}' + inc.incident_id + '">Open incident</a>'
+                        '<a class="d-inline-block mt-2 fw-semibold" href="{$incident_url}' + inc.incident_id + '">Open incident</a>',
+                        { autoPan: !keepOpen }
                     )
                     .addTo(incidentLayer);
+                m.on('popupopen', () => { openId = inc.incident_id; });
+                m.on('popupclose', () => { if (openId === inc.incident_id) openId = null; });
+                if (keepOpen === inc.incident_id) m.openPopup();
             });
 
             data.centers.forEach(c => {
                 L.marker([c.latitude, c.longitude], {
-                    icon: L.divIcon({ className: '', html: '<div class="evac-pin ' + (c.status === 'open' ? '' : 'closed') + '"><i class="bi bi-house-fill"></i></div>', iconSize: [28, 28], iconAnchor: [14, 14] })
+                    icon: L.divIcon({ className: '', html: '<div class="evac-pin ' + (c.status === 'open' ? '' : esc(c.status)) + '"><i class="bi bi-house-fill"></i></div>', iconSize: [28, 28], iconAnchor: [14, 14] })
                 }).bindPopup('<div class="popup-title">' + esc(c.center_name) + '</div>' + esc(c.status) + ', capacity ' + esc(c.capacity))
                   .addTo(centerLayer);
             });
@@ -279,6 +297,9 @@ function loadFeed() {
             document.getElementById('cPending').textContent = data.counts.pending;
             document.getElementById('cPriority').textContent = data.counts.priority;
             document.getElementById('cPendingBox').classList.toggle('alert-on', data.counts.pending > 0);
+
+            // the lists on this page dont refresh by themselves, so tell the admin when theyre behind
+            if (data.version !== PAGE_VERSION) document.getElementById('newUpdates').classList.remove('d-none');
 
             const tag = document.getElementById('liveTag');
             tag.textContent = 'Updated ' + data.updated;
