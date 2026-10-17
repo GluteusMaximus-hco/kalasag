@@ -98,7 +98,8 @@ include __DIR__ . '/../includes/header.php';
                         <td><?= $r['is_verified'] ? '<span class="evac-status open"><i class="bi bi-patch-check-fill"></i> Verified</span>' : '<span class="evac-status full">Not verified</span>' ?></td>
                         <td class="text-end">
                             <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Actions</button>
+                                <!-- fixed strategy so the menu isnt cut off by the scrolling table (last row bug) -->
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false">Actions</button>
                                 <div class="dropdown-menu dropdown-menu-end p-1">
                                     <?php foreach ([
                                         ['verify', $r['is_verified'] ? 'Remove verification' : 'Mark as verified', ''],
