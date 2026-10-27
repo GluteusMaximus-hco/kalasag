@@ -16,6 +16,7 @@ $nav = [
         ['announce',  'Announcements',       'bi-megaphone-fill',        'admin/announcements.php'],
         ['evac',      'Evacuation centers',  'bi-building-fill-check',   'admin/evacuation.php'],
         ['analytics', 'Analytics & reports', 'bi-bar-chart-line-fill',   'admin/analytics.php'],
+        ['notify',    'SMS & email',         'bi-bell-fill',             'admin/notifications.php'],
     ],
     'resident' => [
         ['home',      'Home',                'bi-house-door-fill',       'resident/home.php'],

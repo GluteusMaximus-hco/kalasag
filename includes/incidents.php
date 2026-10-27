@@ -248,6 +248,7 @@ function dashboard_version($conn) {
             (SELECT COALESCE(MAX(incident_id), 0) FROM incidents), '-',
             (SELECT COALESCE(MAX(log_id), 0) FROM incident_status_log), '-',
             (SELECT COALESCE(MAX(response_id), 0) FROM incident_responses), '-',
+            (SELECT COALESCE(MAX(message_id), 0) FROM incident_messages), '-',
             (SELECT COUNT(*) FROM incident_responses WHERE cleared_at IS NULL), '-',
             (SELECT COALESCE(SUM(availability = 'available'), 0) FROM responders)) AS v")->fetch_assoc()['v'];
 }

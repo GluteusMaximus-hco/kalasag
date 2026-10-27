@@ -1,6 +1,12 @@
 # has the gmail app password, keep it off github
 config/mail.php
+# has the sms app username/password, keep it off github
+config/sms.php
 # residents' photos, never commit these
 uploads/incidents/*
 !uploads/incidents/.htaccess
 !uploads/incidents/index.html
+# sent sms/email log (has partial numbers), stays on the server
+logs/*
+!logs/.htaccess
+!logs/index.html

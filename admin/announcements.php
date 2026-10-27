@@ -1,6 +1,7 @@
 <?php
 // advisories that residents see on their home page
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/notify.php';
 $u = require_role('admin');
 
 $page_title = 'Announcements';
@@ -44,7 +45,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $st->bind_param('isssi', $u['user_id'], $d['title'], $d['body'], $d['category'], $d['is_active']);
             }
             $st->execute();
-            flash('success', $aid ? 'Announcement updated.' : 'Announcement posted. Residents will see it on their home page.');
+            // only when ticked (default on for new posts), so fixing a typo doesnt text everyone again
+            $sent = $d['is_active'] && !empty($_POST['notify']);
+            if ($sent) notify_announcement($conn, $d['title'], $d['body'], $d['category']);
+            flash('success', ($aid ? 'Announcement updated.' : 'Announcement posted. Residents will see it on their home page.')
+                . ($sent ? ' Residents are also being texted and emailed.' : ''));
             redirect('admin/announcements.php');
         }
         $edit_id = $aid;
@@ -110,6 +115,12 @@ include __DIR__ . '/../includes/header.php';
                     <div class="form-check mb-3">
                         <input class="form-check-input" type="checkbox" id="is_active" name="is_active" <?= $d['is_active'] ? 'checked' : '' ?>>
                         <label class="form-check-label" for="is_active">Show to residents</label>
+                    </div>
+                    <?php $notify_on = $_SERVER['REQUEST_METHOD'] === 'POST' ? !empty($_POST['notify']) : !$edit_id; ?>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="notify" name="notify" <?= $notify_on ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="notify">Also text and email all residents</label>
+                        <div class="form-text mt-0">Leave unticked when you're only fixing a typo.</div>
                     </div>
                     <button class="btn btn-umber w-100" type="submit"><?= $edit_id ? 'Save changes' : 'Post announcement' ?></button>
                 </form>

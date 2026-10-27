@@ -1,0 +1,2 @@
+# the notification log stays private, only the admin page reads it
+Require all denied

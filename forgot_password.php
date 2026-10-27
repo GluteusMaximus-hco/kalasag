@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/auth_layout.php';
-require_once __DIR__ . '/includes/mailer.php';
+require_once __DIR__ . '/includes/notify.php';   // has app_url() and loads the mailer
 
 if (current_user()) redirect(home_for(current_user()['role']));
 
@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && mail_ready()) {
             $up->bind_param('si', $hash, $row['user_id']);
             $up->execute();
 
-            $link = rtrim(APP_URL, '/') . '/reset_password.php?token=' . $token;
+            $link = app_url('reset_password.php?token=' . $token);   // works on localhost, the tunnel, or a real domain
             $name = e($row['full_name']);
             $html = "<div style=\"font-family:Arial,sans-serif;max-width:480px\">
                 <h2 style=\"color:#3A2317;margin-bottom:4px\">KALASAG</h2>

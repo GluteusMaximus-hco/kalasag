@@ -21,19 +21,21 @@ Stack: PHP 8 + MySQLi (no framework), MySQL/MariaDB, Bootstrap 5, Leaflet.js + O
 | Database (16 tables from our final ERD) | Done |
 | Front end (every screen, desktop + phone) | Done |
 | Core back end (saving, roles, reports, dispatch, analytics) | Done |
-| Forgot password by email | Done, waiting for the barangay's official Gmail |
 | Emergency hotlines page | Done, numbers from the official Barangay 172 hotline sign |
-| SMS notifications (Android phone + barangay SIM) | Back-end review |
-| Email notifications | Back-end review |
-| Online hosting with domain + HTTPS | Before the final defense |
+| SMS notifications (SMS Gateway for Android) | Done, demo uses our lead programmer's phone |
+| Email notifications | Done, demo uses a project Gmail |
+| Forgot password by email | Done |
+| Online hosting with HTTPS | Guide below (InfinityFree, free) |
 | ML urgency tagging | Only if time permits |
+
+For the demo the texts are sent from our lead programmer's phone and the emails from a project Gmail. At handover the barangay puts in their own phone and Gmail, no code changes needed.
 
 ## Setup (Ubuntu)
 
 ```bash
 # 1. install apache, php, mysql
 sudo apt update
-sudo apt install -y apache2 mysql-server php libapache2-mod-php php-mysql php-gd php-mbstring
+sudo apt install -y apache2 mysql-server php libapache2-mod-php php-mysql php-gd php-mbstring php-curl
 
 # 2. let php accept phone photos (default is only 2 MB)
 sudo sed -i 's/^upload_max_filesize.*/upload_max_filesize = 6M/; s/^post_max_size.*/post_max_size = 20M/' /etc/php/*/apache2/php.ini
@@ -105,16 +107,18 @@ Phones only share GPS on https. While it runs locally on plain http, the report 
 - Residents & households: verify, reset password (for people without email), deactivate, household map
 - Announcements, evacuation centers (with map pin and open/full/closed)
 - Analytics: per month, by type, by status, response times, team table, print report, CSV
+- SMS & email: shows if SMS and email are set up, check buttons, and a log of recent sends (numbers partly hidden)
 
 **Responders** (`responder/`)
 - Assignments list + assignment page: directions, "We've arrived", "Mark as cleared" with notes, messages
 
 **Everyone**
 - Account page: edit name, mobile number, email, change password
-- Forgot password by email (once `config/mail.php` is set up)
+- Forgot password by email
 - Emergency hotlines page, open even when logged out
 
 **Automatic**
+- SMS and email notifications (list below)
 - Reports within 100 m of a household with vulnerable members are flagged as priority
 - Photos are checked (real images only), resized, and their GPS/EXIF data is removed
 - Photos are only shown through `photo.php` to people allowed to see that report
@@ -127,7 +131,46 @@ Phones only share GPS on https. While it runs locally on plain http, the report 
 
 Accounts are deactivated instead of deleted, and reports are cancelled instead of deleted, so the barangay keeps a full record for analytics and accountability.
 
-## Forgot password by email (Gmail)
+## SMS and email notifications
+
+| When | Who gets it |
+|---|---|
+| New report | The reporter gets a confirmation (guests also get their KLS tracking code), every admin gets an alert |
+| Acknowledged, resolved, closed | The reporter, with the admin's remark |
+| Remark only | The reporter |
+| Team dispatched | The reporter, and the team's contact number gets the assignment |
+| Team arrived | The reporter |
+| Message from the barangay or the team | The reporter |
+| Announcement | Every active resident, only when "Also text and email all residents" is ticked |
+
+Texts go to the mobile number on the account (or the guest's number). Emails only go to people who added an email. Texts are kept under 160 characters so each one counts as 1 SMS.
+
+Everything is sent after the page finishes saving, so a slow phone or Gmail never slows down the admin or stops a report from being saved. Every send is written to `logs/notify.log` (numbers and emails partly hidden), which the admin sees on the SMS & email page. The `logs/` folder is blocked from the browser.
+
+If SMS or email is not set up, the system still works normally, it just skips sending and the SMS & email page shows "Not set up".
+
+### SMS setup (Android phone)
+
+The texts are sent by the SMS Gateway for Android app (free and open source). The system sends the message to the app over the internet, then the phone texts it using its own SIM and load.
+
+1. On the Android phone, open sms-gate.app in Chrome, tap **Download App**, and install the APK (allow "Install unknown apps" for Chrome when Android asks)
+2. Open it, allow SMS permission, turn on **Cloud server**, then tap **Online**
+3. The Home tab shows a **username** and **password**
+4. On the laptop:
+
+```bash
+cp config/sms.example.php config/sms.php
+nano config/sms.php
+```
+
+5. Put the username in SMS_USERNAME and the password in SMS_PASSWORD, then save
+6. Log in as admin, open **SMS & email**, and press **Send SMS check**
+
+The phone needs mobile data or Wi-Fi, load or an unli text promo, and the app left running (turn off battery saver for the app). Android limits how many texts an app can send in a short time (about 30 per 30 minutes on many phones). When an announcement goes past that, the phone asks if the app may send a large number of messages, and **Always allow** lets the rest go out.
+
+`config/sms.php` is listed in .gitignore, so the password is never uploaded to GitHub.
+
+### Email setup (Gmail)
 
 1. Make a separate Gmail for the system (not someone's personal one)
 2. Turn on 2-Step Verification, then go to Google Account > Security > App passwords and make one
@@ -138,10 +181,38 @@ cp config/mail.example.php config/mail.php
 nano config/mail.php
 ```
 
-The Gmail goes in MAIL_USERNAME and the 16-letter app password (no spaces) goes in MAIL_PASSWORD.
+4. The Gmail goes in MAIL_USERNAME and the 16-letter app password (no spaces) goes in MAIL_PASSWORD
+5. On the SMS & email page, press **Send email check**
+
+Links in the emails (reset password, open your report) use whatever address the system was opened from, so they also work through a tunnel or a hosted domain. APP_URL in `config/mail.php` is only changed if the links come out wrong.
+
 `config/mail.php` is listed in .gitignore, so the password is never uploaded to GitHub.
 
-**Status:** waiting for the barangay's official Gmail. Until it is set up, the forgot password page directs users to the barangay hall.
+### Handover to the barangay
+
+The barangay installs the app on their own Android phone and makes their own Gmail, then puts the new username, password and app password in `config/sms.php` and `config/mail.php`. Nothing else changes.
+
+## Online hosting (InfinityFree, free with HTTPS)
+
+Phones only share GPS on https, so hosting online also turns on the GPS pin.
+
+1. Sign up at infinityfree.com and create an account with a free subdomain
+2. In the control panel, turn on **Free SSL** for the subdomain
+3. In **MySQL Databases**, make a database. Note the host, database name, username and password shown there
+4. On the laptop, make the admin account locally first, then export the database (this file has no CREATE DATABASE, so it imports into any database name):
+
+```bash
+mysqldump -u root -p kalasag_db > kalasag_host.sql
+```
+
+5. Open **phpMyAdmin** from the control panel, pick the new database, then **Import** `kalasag_host.sql`
+6. Edit `config/db.php` with the hosting database details (DB_HOST, DB_USER, DB_PASS, DB_NAME)
+7. Upload everything inside the kalasag folder to `htdocs` using the File Manager or FileZilla, including `config/sms.php` and `config/mail.php`
+8. Open the site with https, log in as admin, and press both check buttons on the SMS & email page
+
+The `.htaccess` files in `uploads/` and `logs/` already work on InfinityFree, so photos and the send log stay private there.
+
+`kalasag_host.sql` contains password hashes, so it is deleted after importing and never uploaded to GitHub.
 
 ## Emergency hotlines
 
@@ -173,20 +244,29 @@ sudo mysql kalasag_db -e "UPDATE users SET password_hash='$NEWHASH' WHERE userna
 
 **Photos won't upload**: php-gd is missing or the upload limit is too low. Install php-gd, do step 2 of setup, then run `sudo systemctl restart apache2`
 
+**SMS check says "wrong username/password"**: the app shows a new password when it is reinstalled. Copy it again into `config/sms.php`
+
+**SMS check sent but no text arrived**: the phone has no load, no internet, or the app was closed by battery saver. Open the app and check its Messages tab
+
+**Email check fails**: the app password is wrong or has spaces, or 2-Step Verification was turned off (this deletes app passwords)
+
+**SMS check says "php-curl is not installed"**: run `sudo apt install php-curl` then restart Apache (or the php -S command)
+
 **Page looks old after an update**: the browser is showing a cached copy. Press Ctrl+Shift+R to reload.
 
 ## Folders
 
 ```
-admin/       admin pages (dashboard, incidents, responders, residents, announcements, evacuation, analytics, export)
+admin/       admin pages (dashboard, incidents, responders, residents, announcements, evacuation, analytics, export, sms & email)
 resident/    resident pages (home, report, my reports, household, evacuation centers)
 responder/   responder pages (assignments)
 api/         json for the live map
-config/      db connection, mail settings template, hotlines list
-includes/    auth helpers, shared layout, incident helpers, report form, mailer
+config/      db connection, mail + sms settings templates, hotlines list
+includes/    auth helpers, shared layout, incident helpers, report form, mailer, notifications
 lib/         PHPMailer (for sending emails)
 assets/      css, js (map pin picker, photo previews), logo
 uploads/     incident photos (served only through photo.php)
+logs/        notify.log, the SMS and email send log (blocked from the browser)
 database/    schema.sql (clean, 16 tables) + migrations/
 setup/       create_admin.php (run once in the terminal)
 ```

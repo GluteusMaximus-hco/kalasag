@@ -1,5 +1,5 @@
 <?php
-// email settings for forgot password
+// email settings for forgot password and email notifications
 // HOW TO USE:
 //   1. copy this file:  cp config/mail.example.php config/mail.php
 //   2. put the system's Gmail + app password in config/mail.php
@@ -16,6 +16,7 @@ define('MAIL_USERNAME', 'your.system.email@gmail.com');
 define('MAIL_PASSWORD', 'xxxxxxxxxxxxxxxx');  // the app password, NOT the normal gmail password
 define('MAIL_FROM_NAME', 'KALASAG Barangay 172');
 
-// full link to the site, used inside the reset email
-// change this when the system is on a real domain
+// full link to the site for links inside emails and texts
+// leave it as is, KALASAG figures out the link by itself (localhost, the tunnel, or hosting)
+// only change it if links in emails come out wrong, like 'https://kalasag172.infinityfreeapp.com'
 define('APP_URL', 'http://localhost/kalasag');

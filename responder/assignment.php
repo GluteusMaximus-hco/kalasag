@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/incidents.php';
 require_once __DIR__ . '/../includes/partials.php';
+require_once __DIR__ . '/../includes/notify.php';
 $u = require_role('responder');
 
 $rid = (int)($_GET['id'] ?? 0);
@@ -25,6 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'arrived' && !$job['arrived_at'] && !$job['cleared_at']) {
         $conn->query("UPDATE incident_responses SET arrived_at = NOW() WHERE response_id = $rid");
         add_message($conn, $iid, $u['user_id'], 'responder', $job['team_name'] . ' has arrived at the location.');
+        notify_reporter($conn, $iid, 'arrived', ['team' => $job['team_name']]);
         flash('success', 'Marked as arrived. The barangay and the reporter can see it.');
     } elseif ($action === 'cleared' && !$job['cleared_at']) {
         $notes = trim($_POST['action_taken'] ?? '');
@@ -45,7 +47,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('responder/home.php');
     } elseif ($action === 'message' && !$job['cleared_at']) {
         $msg = trim($_POST['message'] ?? '');
-        if ($msg !== '' && mb_strlen($msg) <= 1000) { add_message($conn, $iid, $u['user_id'], 'responder', $msg); flash('success', 'Message sent.'); }
+        if ($msg !== '' && mb_strlen($msg) <= 1000) {
+            add_message($conn, $iid, $u['user_id'], 'responder', $msg);
+            notify_reporter($conn, $iid, 'message', ['message' => $msg, 'from' => $job['team_name']]);
+            flash('success', 'Message sent.');
+        }
     }
     redirect('responder/assignment.php?id=' . $rid);
 }

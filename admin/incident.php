@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/incidents.php';
 require_once __DIR__ . '/../includes/partials.php';
+require_once __DIR__ . '/../includes/notify.php';
 $u = require_role('admin');
 
 $id = (int)($_GET['id'] ?? 0);
@@ -44,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     flash('warning', 'Write a remark, or pick a new status.');
                 } else {
                     log_status($conn, $id, $u['user_id'], $old, $old, $remarks);
+                    notify_reporter($conn, $id, 'update', ['remark' => $remarks]);
                     flash('success', 'Remark added.');
                 }
             } else {
@@ -56,6 +58,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // closing it, or pulling it back from dispatched, sends the teams home
                 if (in_array($new, ['resolved', 'cancelled'], true) || $old === 'dispatched') free_responders($conn, $id);
                 $conn->commit();
+                // text/email the reporter (back to pending only notifies if the admin wrote why)
+                if ($new !== 'pending') notify_reporter($conn, $id, $new, ['remark' => $remarks]);
+                elseif ($remarks !== '') notify_reporter($conn, $id, 'update', ['remark' => $remarks]);
                 flash('success', 'Status changed to ' . status_label($new) . '.');
             }
         } elseif ($action === 'dispatch') {
@@ -85,6 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     log_status($conn, $id, $u['user_id'], $old, 'dispatched', $team['team_name'] . ' dispatched');
                 }
                 $conn->commit();
+                notify_reporter($conn, $id, 'dispatched', ['team' => $team['team_name']]);
+                notify_team_dispatched($conn, $id, $rid);
                 flash('success', $team['team_name'] . ' dispatched.');
             }
         } elseif ($action === 'urgency') {
@@ -107,7 +114,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($action === 'message') {
             $msg = trim($_POST['message'] ?? '');
             if ($msg === '' || mb_strlen($msg) > 1000) flash('danger', 'Write a message under 1000 characters.');
-            else { add_message($conn, $id, $u['user_id'], 'admin', $msg); flash('success', 'Message sent.'); }
+            else {
+                add_message($conn, $id, $u['user_id'], 'admin', $msg);
+                notify_reporter($conn, $id, 'message', ['message' => $msg, 'from' => 'Barangay 172']);
+                flash('success', 'Message sent.');
+            }
         }
     } catch (Throwable $ex) {
         try { $conn->rollback(); } catch (Throwable $e2) {}   // undo half-done changes

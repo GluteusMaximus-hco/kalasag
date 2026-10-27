@@ -1,5 +1,6 @@
 <?php
 // report form shared by resident/report.php and guest_report.php
+require_once __DIR__ . '/notify.php';
 // handles both the checking and the saving so both pages behave the same
 
 function report_defaults() {
@@ -74,6 +75,9 @@ function save_report($conn, $d, $files, $resident_id, $user_id, $guest) {
         log_status($conn, $id, $user_id, null, 'pending', $guest ? 'Guest report submitted' : 'Report submitted');
         save_photos($conn, $id, $files['photos'] ?? null);
         $conn->commit();
+        // tell the reporter we got it + alert the barangay staff (sent after the page loads)
+        notify_reporter($conn, $id, 'received');
+        notify_admins_new_report($conn, $id);
         return [$id, $code];
     } catch (Throwable $ex) {
         $conn->rollback();
