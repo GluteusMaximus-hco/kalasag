@@ -207,7 +207,7 @@ CREATE TABLE evacuation_centers (
 
 -- =========================================================
 -- incident types (the only starting data, the report form needs these)
--- the admin can add more later
+-- more types can be added here later if the barangay needs them
 -- =========================================================
 
 INSERT INTO incident_types (type_name, icon_name, description) VALUES

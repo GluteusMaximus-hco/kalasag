@@ -135,6 +135,8 @@ include __DIR__ . '/../includes/header.php';
                                         <span><?= e($q['landmark'] ?: 'No landmark') ?></span>
                                         <span>&middot;</span>
                                         <span><?= e(time_ago($q['date_reported'])) ?></span>
+                                        <span>&middot;</span>
+                                        <span><?= e($q['reporter']) ?></span>
                                     </div>
                                 </div>
                             </a>
@@ -174,7 +176,8 @@ include __DIR__ . '/../includes/header.php';
                                     <strong><?= e($a['type_name']) ?> #<?= (int)$a['incident_id'] ?></strong>
                                     <?php if ($a['old_status'] === $a['new_status']): ?>got an update
                                     <?php else: ?>marked <span class="st st-<?= e($a['new_status']) ?>"><?= e(status_label($a['new_status'])) ?></span><?php endif; ?>
-                                    <div class="text-secondary small"><?= e($a['remarks'] ?: '') ?> <?= $a['who'] !== 'System' ? 'by ' . e($a['who']) : '' ?></div>
+                                    <?php if ($a['remarks']): ?><div class="small"><?= e($a['remarks']) ?></div><?php endif; ?>
+                                    <?php if ($a['who'] !== 'System'): ?><div class="text-secondary small">by <?= e($a['who']) ?></div><?php endif; ?>
                                 </div>
                             </li>
                         <?php endforeach; ?>
@@ -211,6 +214,7 @@ $chart_data = js_json(array_map('intval', array_column($by_type, 'total')));
 $colors_json = js_json($status_colors);
 $version_json = js_json(dashboard_version($conn));
 $login_url = url('login.php');
+$blat = BRGY_LAT; $blng = BRGY_LNG;
 
 $extra_scripts = <<<HTML
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -220,7 +224,7 @@ const STATUS_COLORS = {$colors_json};
 
 // ---------- map ----------
 // barangay 172 coords from PhilAtlas, the map zooms to the pins anyway once there are reports
-const map = L.map('incidentMap', { scrollWheelZoom: false }).setView([14.5351, 121.0114], 16);
+const map = L.map('incidentMap', { scrollWheelZoom: false }).setView([{$blat}, {$blng}], 16);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; OpenStreetMap contributors'
@@ -234,6 +238,7 @@ let openId = null;   // incident whose popup the admin has open, so the 30s refr
 
 // escape text before putting it in popups
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cap = s => String(s ?? '').charAt(0).toUpperCase() + String(s ?? '').slice(1);
 
 function pinIcon(inc) {
     const pulse = inc.status === 'pending' && inc.urgency === 'critical' ? ' pulse' : '';
@@ -268,7 +273,7 @@ function loadFeed() {
                     .bindPopup(
                         '<div class="popup-title">' + esc(inc.type_name) + ' #' + inc.incident_id + '</div>' +
                         '<span class="st st-' + esc(inc.status) + '">' + esc(inc.status_label) + '</span> ' +
-                        (inc.urgency ? '<span class="urg urg-' + esc(inc.urgency) + '">' + esc(inc.urgency) + '</span> ' : '') +
+                        (inc.urgency ? '<span class="urg urg-' + esc(inc.urgency) + '">' + esc(cap(inc.urgency)) + '</span> ' : '') +
                         (inc.is_priority ? '<span class="prio-flag">Priority</span>' : '') +
                         '<p class="mb-1 mt-2">' + esc(inc.description) + '</p>' +
                         '<div class="text-secondary">' + esc(inc.landmark || 'No landmark') + ' &middot; ' + esc(inc.ago) + (inc.is_guest ? ' &middot; guest report' : '') + '</div>' +
@@ -284,7 +289,7 @@ function loadFeed() {
             data.centers.forEach(c => {
                 L.marker([c.latitude, c.longitude], {
                     icon: L.divIcon({ className: '', html: '<div class="evac-pin ' + (c.status === 'open' ? '' : esc(c.status)) + '"><i class="bi bi-house-fill"></i></div>', iconSize: [28, 28], iconAnchor: [14, 14] })
-                }).bindPopup('<div class="popup-title">' + esc(c.center_name) + '</div>' + esc(c.status) + ', capacity ' + esc(c.capacity))
+                }).bindPopup('<div class="popup-title">' + esc(c.center_name) + '</div>' + esc(cap(c.status)) + (c.capacity > 0 ? ' &middot; fits about ' + esc(c.capacity) + ' people' : ''))
                   .addTo(centerLayer);
             });
 

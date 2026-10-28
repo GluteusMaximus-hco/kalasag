@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$errors) {
         try {
             [$id] = save_report($conn, $d, $_FILES, my_resident_id($conn, $u['user_id']), $u['user_id'], false);
-            flash('success', 'Report sent. The barangay can see it now, and you will get updates here.');
+            flash('success', 'Report sent. The barangay can see it now. Updates will show up here and get texted to you.');
             redirect('resident/report_view.php?id=' . $id);
         } catch (Throwable $ex) {
             error_log('report save: ' . $ex->getMessage());

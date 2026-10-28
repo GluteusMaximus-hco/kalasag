@@ -63,7 +63,7 @@ show_flash();
     <?php if (isset($_GET['new'])): ?>
         <div class="alert alert-success"><strong>Report sent.</strong> The barangay can see it now. Save this code so you can check for updates:</div>
         <div class="track-code mb-2"><?= e($inc['tracking_code']) ?></div>
-        <p class="small text-secondary mb-4">Take a screenshot or write it down. Anyone with this code can see this report.</p>
+        <p class="small text-secondary mb-4">Take a screenshot or write it down. Anyone with this code can see this report.<?= $inc['reporter_contact'] ? ' The code was also texted to ' . e($inc['reporter_contact']) . '.' : '' ?></p>
     <?php endif; ?>
 
     <div class="d-flex justify-content-between align-items-center mb-2">

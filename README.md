@@ -206,7 +206,7 @@ mysqldump -u root -p kalasag_db > kalasag_host.sql
 ```
 
 5. Open **phpMyAdmin** from the control panel, pick the new database, then **Import** `kalasag_host.sql`
-6. Edit `config/db.php` with the hosting database details (DB_HOST, DB_USER, DB_PASS, DB_NAME)
+6. Edit `config/db.php` with the hosting database details (DB_HOST, DB_USER, DB_PASS, DB_NAME), and set APP_URL in `config/mail.php` to the site's https address so every link in emails and texts points to the real site
 7. Upload everything inside the kalasag folder to `htdocs` using the File Manager or FileZilla, including `config/sms.php` and `config/mail.php`
 8. Open the site with https, log in as admin, and press both check buttons on the SMS & email page
 

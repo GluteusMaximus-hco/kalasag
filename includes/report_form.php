@@ -1,7 +1,7 @@
 <?php
 // report form shared by resident/report.php and guest_report.php
-require_once __DIR__ . '/notify.php';
 // handles both the checking and the saving so both pages behave the same
+require_once __DIR__ . '/notify.php';
 
 function report_defaults() {
     return ['type_id' => '', 'description' => '', 'latitude' => '', 'longitude' => '', 'gps_accuracy' => '', 'landmark' => '', 'guest_name' => '', 'guest_contact' => ''];

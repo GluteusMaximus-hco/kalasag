@@ -71,7 +71,7 @@ include __DIR__ . '/../includes/header.php';
             <i class="bi bi-broadcast"></i>
             <div>
                 <div class="big">Report an emergency</div>
-                <small>Flood, fire, accident, fallen tree, or medical. Your location is pinned automatically.</small>
+                <small>Flood, fire, accident, fallen tree, or medical. Pin where it is so the team can find it.</small>
             </div>
         </a>
 
@@ -130,7 +130,7 @@ include __DIR__ . '/../includes/header.php';
                             <div class="fw-semibold"><?= e($c['center_name']) ?></div>
                             <div class="text-secondary small">
                                 <span class="evac-status <?= e($c['status']) ?>"><?= e(ucfirst($c['status'])) ?></span>
-                                &middot; fits about <?= (int)$c['capacity'] ?> people
+                                <?php if ($c['capacity'] > 0): ?>&middot; fits about <?= (int)$c['capacity'] ?> people<?php endif; ?>
                             </div>
                         </div>
                         <?php if ($c['meters'] !== null): ?>

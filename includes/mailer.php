@@ -41,7 +41,7 @@ function mailer_new() {
     if (MAIL_PASSWORD !== '') {
         $m->SMTPAuth = true;
         $m->Username = MAIL_USERNAME;
-        $m->Password = MAIL_PASSWORD;
+        $m->Password = preg_replace('/\s+/', '', MAIL_PASSWORD);   // google shows it with spaces, gmail wants it without
     }
     if (MAIL_SECURE !== '') $m->SMTPSecure = MAIL_SECURE;
     $m->CharSet = 'UTF-8';

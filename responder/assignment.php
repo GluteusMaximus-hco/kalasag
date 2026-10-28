@@ -47,7 +47,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('responder/home.php');
     } elseif ($action === 'message' && !$job['cleared_at']) {
         $msg = trim($_POST['message'] ?? '');
-        if ($msg !== '' && mb_strlen($msg) <= 1000) {
+        if ($msg === '' || mb_strlen($msg) > 1000) {
+            flash('danger', 'Write a message under 1000 characters.');
+        } else {
             add_message($conn, $iid, $u['user_id'], 'responder', $msg);
             notify_reporter($conn, $iid, 'message', ['message' => $msg, 'from' => $job['team_name']]);
             flash('success', 'Message sent.');
@@ -119,7 +121,7 @@ include __DIR__ . '/../includes/header.php';
             <div class="panel-head"><h2>Messages</h2><span class="hint">Barangay and reporter</span></div>
             <div class="panel-body">
                 <?php render_messages(incident_messages($conn, $iid), 'responder'); ?>
-                <?php if (!$job['cleared_at']) render_message_form('message', 'Update the barangay'); ?>
+                <?php if (!$job['cleared_at']) render_message_form('message', 'Message the barangay and the reporter'); ?>
             </div>
         </section>
     </div>

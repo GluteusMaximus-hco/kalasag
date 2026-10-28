@@ -42,8 +42,8 @@ function incident_types($conn) {
     return $conn->query('SELECT type_id, type_name, icon_name, description FROM incident_types ORDER BY type_id')->fetch_all(MYSQLI_ASSOC);
 }
 
-// checks + saves up to 3 photos for an incident
-// returns an error message, or '' if everything went fine
+// checks the photos before anything gets saved (max 3, real images only, size limit)
+// returns an error message, or '' if everything is fine
 function check_photos($files) {
     if (empty($files) || !isset($files['name']) || !is_array($files['name'])) return '';
     $count = 0;
@@ -63,6 +63,7 @@ function check_photos($files) {
     return '';
 }
 
+// saves the photos that passed check_photos()
 function save_photos($conn, $incident_id, $files) {
     if (empty($files) || !isset($files['name']) || !is_array($files['name'])) return;
     if (!is_dir(UPLOAD_DIR)) mkdir(UPLOAD_DIR, 0750, true);
@@ -190,7 +191,7 @@ function can_view_incident($conn, $u, $incident_id) {
         $st->execute();
         return (bool)$st->get_result()->num_rows;
     }
-    return in_array((int)$incident_id, $_SESSION['guest_incidents'] ?? [], true);
+    return false;
 }
 
 // full incident row with type, urgency, reporter

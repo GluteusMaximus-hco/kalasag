@@ -80,7 +80,7 @@ include __DIR__ . '/../includes/header.php';
                     <div class="evac-row">
                         <div>
                             <div class="fw-semibold"><?= e($c['center_name']) ?></div>
-                            <div class="small text-secondary"><?= e($c['address'] ?: 'No address') ?> &middot; fits about <?= (int)$c['capacity'] ?></div>
+                            <div class="small text-secondary"><?= e($c['address'] ?: 'No address') ?> &middot; fits about <?= (int)$c['capacity'] ?> people</div>
                             <div class="small text-secondary">Updated <?= e(time_ago($c['last_updated'])) ?><?= $c['updater'] ? ' by ' . e($c['updater']) : '' ?></div>
                             <div class="d-flex gap-2 mt-2">
                                 <a class="btn btn-sm btn-outline-secondary" href="?edit=<?= (int)$c['center_id'] ?>">Edit</a>

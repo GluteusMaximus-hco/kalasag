@@ -31,7 +31,9 @@ function app_url($path = '') {
         $base = rtrim(APP_URL, '/');
     } else {
         $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https';
-        $base = ($https ? 'https://' : 'http://') . ($_SERVER['HTTP_HOST'] ?? 'localhost') . BASE_URL;
+        // only normal host characters, so a weird Host header cant sneak into the links
+        $host = preg_replace('/[^A-Za-z0-9.\-:\[\]]/', '', $_SERVER['HTTP_HOST'] ?? '') ?: 'localhost';
+        $base = ($https ? 'https://' : 'http://') . $host . BASE_URL;
     }
     return $base . '/' . ltrim($path, '/');
 }
@@ -313,7 +315,9 @@ function notify_announcement($conn, $title, $body, $category) {
         $rows = $conn->query("SELECT COALESCE(us.contact_no, r.contact_no) AS phone, us.email
                               FROM residents r JOIN users us ON us.user_id = r.user_id WHERE us.is_active = 1")->fetch_all(MYSQLI_ASSOC);
         if (!$rows) return;
-        $sms = 'KALASAG ' . ucfirst($category) . ': ' . sms_cut($title, 60) . '. ' . sms_cut($body, 80);
+        // no extra period if the title already ends with one (or ! or ?)
+        $t = sms_cut($title, 60);
+        $sms = 'KALASAG ' . ucfirst($category) . ': ' . $t . (preg_match('/[.!?]$/', $t) ? ' ' : '. ') . sms_cut($body, 80);
         sms_send(array_column($rows, 'phone'), $sms, 'announcement');
         email_send_bcc(array_column($rows, 'email'), 'KALASAG ' . ucfirst($category) . ': ' . $title, $title, [$body], app_url('resident/home.php'), 'announcement');
     });

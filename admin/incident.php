@@ -153,6 +153,8 @@ $st = $conn->prepare("SELECT rp.responder_id, rp.team_name, rp.availability,
 $st->bind_param('i', $inc['type_id']);
 $st->execute();
 $teams = $st->get_result()->fetch_all(MYSQLI_ASSOC);
+// the ones that can still be sent (not already working this incident)
+$can_send = array_filter($teams, fn($t) => !in_array($t['responder_id'], $on_scene));
 
 $closed = in_array($inc['status'], ['resolved', 'cancelled'], true);
 $page_title = $inc['type_name'] . ' #' . $id;
@@ -217,7 +219,7 @@ include __DIR__ . '/../includes/header.php';
                         <?php endforeach; ?>
                     </select>
                     <?php if ($inc['status'] === 'dispatched'): ?><div class="form-text mt-0 mb-2">Moving it back to acknowledged or pending calls the teams back.</div><?php endif; ?>
-                    <label class="form-label" for="remarks">Remarks <span class="text-secondary fw-normal">(the reporter sees this)</span></label>
+                    <label class="form-label" for="remarks">Remarks <span class="text-secondary fw-normal">(the reporter sees this and gets it by text)</span></label>
                     <input class="form-control mb-3" id="remarks" name="remarks" maxlength="500" placeholder="Example: Team checked, water is going down">
                     <button class="btn btn-umber w-100" type="submit">Save status</button>
                 </form>
@@ -250,7 +252,7 @@ include __DIR__ . '/../includes/header.php';
                             <div>
                                 <div class="fw-semibold"><?= e($r['team_name']) ?></div>
                                 <div class="small text-secondary">
-                                    Sent <?= e(date('g:i A', strtotime($r['dispatched_at']))) ?>
+                                    Sent <?= e(date(date('Y-m-d', strtotime($r['dispatched_at'])) === date('Y-m-d') ? 'g:i A' : 'M j, g:i A', strtotime($r['dispatched_at']))) ?>
                                     &middot; <?= $r['arrived_at'] ? 'arrived ' . e(date('g:i A', strtotime($r['arrived_at']))) : 'not yet arrived' ?>
                                     <?= $r['cleared_at'] ? '&middot; cleared ' . e(date('g:i A', strtotime($r['cleared_at']))) : '' ?>
                                 </div>
@@ -266,8 +268,10 @@ include __DIR__ . '/../includes/header.php';
                     <p class="small text-secondary mb-0">This incident is closed. Set it back to pending or acknowledged to dispatch again.</p>
                 <?php elseif (!$teams): ?>
                     <p class="small text-secondary mb-0">No responder teams yet. <a href="<?= url('admin/responders.php') ?>">Add a team</a>.</p>
+                <?php elseif (!$can_send): ?>
+                    <p class="small text-secondary mb-0">Every active team is already on this incident.</p>
                 <?php else: ?>
-                    <?php foreach ($teams as $t): if (in_array($t['responder_id'], $on_scene)) continue; ?>
+                    <?php foreach ($can_send as $t): ?>
                         <form method="post" class="resp-row">
                             <?= csrf_field() ?>
                             <input type="hidden" name="action" value="dispatch">

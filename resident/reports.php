@@ -34,7 +34,7 @@ include __DIR__ . '/../includes/header.php';
 
 <section class="panel">
     <?php if (!$reports): ?>
-        <div class="empty"><i class="bi bi-inbox" style="color:var(--muted)"></i><?= $filter === 'all' ? 'You haven\'t reported anything yet.' : 'Nothing here.' ?></div>
+        <div class="empty"><i class="bi bi-inbox" style="color:var(--muted)"></i><?= ['all' => 'You haven\'t reported anything yet.', 'open' => 'No open reports.', 'closed' => 'No closed reports yet.'][$filter] ?></div>
     <?php else: ?>
         <ul class="queue">
             <?php foreach ($reports as $r): ?>

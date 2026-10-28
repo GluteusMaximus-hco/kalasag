@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!preg_match('/^09\d{9}$/', $old['contact_no'])) $errors['contact_no'] = 'Use an 11-digit mobile number starting with 09.';
 
-    // email is optional, only for forgot password
+    // email is optional, used for forgot password and email updates
     if ($old['email'] !== '') {
         if (!filter_var($old['email'], FILTER_VALIDATE_EMAIL)) {
             $errors['email'] = 'Enter a valid email, like juan@gmail.com.';
@@ -112,12 +112,12 @@ auth_top('Create an account');
         <div class="col-sm-6">
             <label class="form-label" for="contact_no">Mobile number</label>
             <input class="form-control<?= inv($errors,'contact_no') ?>" id="contact_no" name="contact_no" inputmode="numeric" placeholder="09XXXXXXXXX" value="<?= e($old['contact_no']) ?>" autocomplete="tel" required>
-            <?= field_err($errors, 'contact_no') ?: '<div class="form-text">So the barangay can call or text you about your reports.</div>' ?>
+            <?= field_err($errors, 'contact_no') ?: '<div class="form-text">Updates on your reports are texted to this number.</div>' ?>
         </div>
         <div class="col-12">
             <label class="form-label" for="email">Email <span class="text-secondary fw-normal">(optional)</span></label>
             <input class="form-control<?= inv($errors,'email') ?>" id="email" name="email" type="email" value="<?= e($old['email']) ?>" autocomplete="email">
-            <?= field_err($errors, 'email') ?: '<div class="form-text">Lets you reset your password by email if you forget it.</div>' ?>
+            <?= field_err($errors, 'email') ?: '<div class="form-text">For password resets and email updates about your reports.</div>' ?>
         </div>
         <div class="col-12">
             <label class="form-label" for="username">Username</label>

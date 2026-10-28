@@ -33,6 +33,7 @@ $points = array_map(fn($c) => [
 ], $mapped);
 
 $extra_head = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">';
+require_once __DIR__ . '/../includes/incidents.php';   // for BRGY_LAT / BRGY_LNG
 include __DIR__ . '/../includes/header.php';
 ?>
 
@@ -62,7 +63,7 @@ include __DIR__ . '/../includes/header.php';
                                     <div class="text-secondary small"><?= e($c['address'] ?: 'No address posted') ?></div>
                                     <div class="small mt-1">
                                         <span class="evac-status <?= e($c['status']) ?>"><?= e(ucfirst($c['status'])) ?></span>
-                                        <span class="text-secondary"> &middot; fits about <?= (int)$c['capacity'] ?> people</span>
+                                        <?php if ($c['capacity'] > 0): ?><span class="text-secondary"> &middot; fits about <?= (int)$c['capacity'] ?> people</span><?php endif; ?>
                                     </div>
                                     <?php if ($c['latitude'] !== null): ?>
                                         <a class="small fw-semibold" target="_blank" rel="noopener"
@@ -84,13 +85,14 @@ include __DIR__ . '/../includes/header.php';
 <?php
 $points_json = js_json($points);
 $home_json = js_json($home ? ['lat' => (float)$home['latitude'], 'lng' => (float)$home['longitude']] : null);
+$blat = BRGY_LAT; $blng = BRGY_LNG;
 $extra_scripts = <<<HTML
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const CENTERS = {$points_json};
 const HOME = {$home_json};
 // barangay 172 coords from PhilAtlas, used when we dont know where the resident is
-const BRGY = [14.5351, 121.0114];
+const BRGY = [{$blat}, {$blng}];
 
 const map = L.map('evacMap', { scrollWheelZoom: false }).setView(BRGY, 16);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
@@ -99,7 +101,7 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 
 CENTERS.forEach(c => {
     L.marker([c.lat, c.lng], { icon: L.divIcon({ className: '', html: '<div class="evac-pin ' + (c.status === 'open' ? '' : esc(c.status)) + '"><i class="bi bi-house-fill"></i></div>', iconSize: [28, 28], iconAnchor: [14, 14] }) })
-        .bindPopup('<div class="popup-title">' + esc(c.name) + '</div>' + esc(c.status) + ', fits about ' + esc(c.capacity))
+        .bindPopup('<div class="popup-title">' + esc(c.name) + '</div>' + esc(c.status.charAt(0).toUpperCase() + c.status.slice(1)) + (c.capacity > 0 ? ' &middot; fits about ' + esc(c.capacity) + ' people' : ''))
         .addTo(map);
 });
 

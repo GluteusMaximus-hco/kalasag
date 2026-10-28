@@ -42,6 +42,8 @@
 
         function locate() {
             if (!('geolocation' in navigator)) { say('This browser cannot share location. Tap the map to place the pin.', true); return; }
+            // browsers only give GPS on https, so dont make people wait for an answer that wont come
+            if (!window.isSecureContext) { say('Your location can only be shared on a secure (https) connection. Tap the map to place the pin.', true); return; }
             say('Getting your location...');
             navigator.geolocation.getCurrentPosition(
                 pos => {

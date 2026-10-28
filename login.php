@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 auth_top('Log in');
 ?>
 <h2>Log in</h2>
-<p class="lead-sm">Use the account you registered with the barangay.</p>
+<p class="lead-sm">Log in with your KALASAG account.</p>
 
 <?php show_flash(); ?>
 <?php if ($error): ?>

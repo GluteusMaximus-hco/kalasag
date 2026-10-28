@@ -23,8 +23,8 @@ function ask($label, $hidden = false) {
 echo "== KALASAG: create admin account ==" . PHP_EOL;
 
 $full_name   = ask('Full name');
-$contact     = ask('Mobile number (09XXXXXXXXX)');
-$email       = ask('Email (optional, for forgot password, press Enter to skip)');
+$contact     = ask('Mobile number (09XXXXXXXXX, new report alerts are texted here)');
+$email       = ask('Email (optional, for forgot password and email alerts, press Enter to skip)');
 $position    = ask('Position (ex. Barangay Secretary)');
 $designation = ask('Designation (ex. BDRRM Focal Person)');
 $username    = ask('Username');

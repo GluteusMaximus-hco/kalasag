@@ -127,6 +127,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// what the number and email are used for, depends on the role
+$hint_phone = ['admin' => 'New report alerts are texted to this number.', 'responder' => 'New assignments are texted to this number.'][$u['role']] ?? 'Updates on your reports are texted to this number.';
+$hint_email = ['admin' => 'For password resets and new report alerts.', 'responder' => 'For password resets and new assignments.'][$u['role']] ?? 'For password resets and email updates about your reports.';
+
 // small helpers for showing errors under inputs
 function ferr($arr, $k) { return isset($arr[$k]) ? '<div class="invalid-feedback d-block">' . e($arr[$k]) . '</div>' : ''; }
 function finv($arr, $k) { return isset($arr[$k]) ? ' is-invalid' : ''; }
@@ -169,12 +173,12 @@ include __DIR__ . '/includes/header.php';
                         <div class="col-sm-6">
                             <label class="form-label" for="contact_no">Mobile number</label>
                             <input class="form-control<?= finv($P,'contact_no') ?>" id="contact_no" name="contact_no" inputmode="numeric" placeholder="09XXXXXXXXX" value="<?= e($form['contact_no']) ?>" autocomplete="tel" required>
-                            <?= ferr($P, 'contact_no') ?: '<div class="form-text">So the barangay can call or text you about your reports.</div>' ?>
+                            <?= ferr($P, 'contact_no') ?: '<div class="form-text">' . e($hint_phone) . '</div>' ?>
                         </div>
                         <div class="col-sm-6">
                             <label class="form-label" for="email">Email <span class="text-secondary fw-normal">(optional)</span></label>
                             <input class="form-control<?= finv($P,'email') ?>" id="email" name="email" type="email" value="<?= e($form['email'] ?? '') ?>" autocomplete="email">
-                            <?= ferr($P, 'email') ?: '<div class="form-text">Lets you reset your password by email if you forget it.</div>' ?>
+                            <?= ferr($P, 'email') ?: '<div class="form-text">' . e($hint_email) . '</div>' ?>
                         </div>
                     </div>
                     <button class="btn btn-umber mt-4" type="submit">Save profile</button>

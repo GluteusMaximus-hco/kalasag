@@ -195,7 +195,7 @@ include __DIR__ . '/../includes/header.php';
                     <div class="mb-3"><label class="form-label" for="full_name">Team leader / contact person</label>
                         <input class="form-control<?= $inv('full_name') ?>" id="full_name" name="full_name" maxlength="120" value="<?= e($d['full_name']) ?>"><?= $err('full_name') ?></div>
                     <div class="mb-3"><label class="form-label" for="contact_no">Team mobile number</label>
-                        <input class="form-control<?= $inv('contact_no') ?>" id="contact_no" name="contact_no" inputmode="numeric" placeholder="09XXXXXXXXX" value="<?= e($d['contact_no']) ?>"><?= $err('contact_no') ?: '<div class="form-text">The barangay calls this number when the team is dispatched.</div>' ?></div>
+                        <input class="form-control<?= $inv('contact_no') ?>" id="contact_no" name="contact_no" inputmode="numeric" placeholder="09XXXXXXXXX" value="<?= e($d['contact_no']) ?>"><?= $err('contact_no') ?: '<div class="form-text">New assignments are texted to this number.</div>' ?></div>
                     <fieldset class="mb-3">
                         <legend class="form-label">Handles these incidents</legend>
                         <?php foreach ($types as $t): ?>

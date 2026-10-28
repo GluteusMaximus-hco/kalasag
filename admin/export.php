@@ -37,7 +37,7 @@ $res = $st->get_result();
 // stops excel from running "formulas" someone typed into a report (csv injection)
 function safe_cell($v) {
     $v = (string)$v;
-    return ($v !== '' && strpos('=+-@', $v[0]) !== false) ? "'" . $v : $v;
+    return ($v !== '' && strpos("=+-@\t\r", $v[0]) !== false) ? "'" . $v : $v;
 }
 
 header('Content-Type: text/csv; charset=utf-8');

@@ -48,8 +48,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // only when ticked (default on for new posts), so fixing a typo doesnt text everyone again
             $sent = $d['is_active'] && !empty($_POST['notify']);
             if ($sent) notify_announcement($conn, $d['title'], $d['body'], $d['category']);
+            // say what really goes out, depends on what's set up
+            $how = $sent ? array_filter([sms_ready() ? 'texted' : '', mail_ready() ? 'emailed' : '']) : [];
             flash('success', ($aid ? 'Announcement updated.' : 'Announcement posted. Residents will see it on their home page.')
-                . ($sent ? ' Residents are also being texted and emailed.' : ''));
+                . ($how ? ' Residents are also being ' . implode(' and ', $how) . '.' : ''));
             redirect('admin/announcements.php');
         }
         $edit_id = $aid;
@@ -120,7 +122,7 @@ include __DIR__ . '/../includes/header.php';
                     <div class="form-check mb-3">
                         <input class="form-check-input" type="checkbox" id="notify" name="notify" <?= $notify_on ? 'checked' : '' ?>>
                         <label class="form-check-label" for="notify">Also text and email all residents</label>
-                        <div class="form-text mt-0">Leave unticked when you're only fixing a typo.</div>
+                        <div class="form-text mt-0"><?= sms_ready() || mail_ready() ? 'Leave unticked when you\'re only fixing a typo.' : 'SMS and email are not set up yet, so this only posts it on the site.' ?></div>
                     </div>
                     <button class="btn btn-umber w-100" type="submit"><?= $edit_id ? 'Save changes' : 'Post announcement' ?></button>
                 </form>

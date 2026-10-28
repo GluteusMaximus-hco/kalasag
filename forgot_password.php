@@ -39,20 +39,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && mail_ready()) {
             $up->execute();
 
             $link = app_url('reset_password.php?token=' . $token);   // works on localhost, the tunnel, or a real domain
-            $name = e($row['full_name']);
-            $html = "<div style=\"font-family:Arial,sans-serif;max-width:480px\">
-                <h2 style=\"color:#3A2317;margin-bottom:4px\">KALASAG</h2>
-                <p style=\"color:#7B6658;margin-top:0\">Barangay 172, Zone 17, Malibay, Pasay City</p>
-                <p>Hi {$name},</p>
-                <p>Someone asked to reset the password of your KALASAG account. Click the button to set a new one. The link works for 30 minutes and only once.</p>
-                <p><a href=\"{$link}\" style=\"display:inline-block;background:#B25A26;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:bold\">Set a new password</a></p>
-                <p style=\"color:#7B6658;font-size:13px\">If you didn't ask for this, ignore this email. Your password stays the same.</p>
-                </div>";
-            $text = "Hi {$row['full_name']},\n\nSet a new KALASAG password here (works for 30 minutes, one time only):\n{$link}\n\nIf you didn't ask for this, ignore this email.";
-
-            if (!send_mail($row['email'], $row['full_name'], 'Reset your KALASAG password', $html, $text)) {
-                error_log('Reset email not sent for user_id ' . $row['user_id']);
-            }
+            // same email look as the other KALASAG emails, and it shows up in the admin's send log
+            [$ok] = email_send($row['email'], $row['full_name'], 'Reset your KALASAG password', 'Reset your password', [
+                'Hi ' . $row['full_name'] . ',',
+                'Someone asked to reset the password of your KALASAG account. Click the button to set a new one. The link works for 30 minutes and only once.',
+                "If you didn't ask for this, ignore this email. Your password stays the same.",
+            ], $link, 'password reset', 'Set a new password');
+            if (!$ok) error_log('Reset email not sent for user_id ' . $row['user_id']);
         }
         // same message whether the account exists or not, so nobody can fish for accounts
         $sent = true;
@@ -64,7 +57,7 @@ auth_top('Forgot password');
 <h2>Forgot password</h2>
 
 <?php if (!mail_ready()): ?>
-    <p class="lead-sm">Email reset isn't set up on this system yet.</p>
+    <p class="lead-sm">Password reset by email isn't available right now.</p>
     <div class="alert alert-info d-flex gap-2"><i class="bi bi-building"></i><div>Visit or call the Barangay 172 hall and the admin will reset your password.</div></div>
 
 <?php elseif ($sent): ?>

@@ -25,10 +25,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $abc = 'abcdefghjkmnpqrstuvwxyz23456789';
         $temp = '';
         for ($i = 0; $i < 10; $i++) $temp .= $abc[random_int(0, strlen($abc) - 1)];
+        $st = $conn->prepare('SELECT first_name FROM residents WHERE resident_id = ?');
+        $st->bind_param('i', $rid); $st->execute();
+        $who = $st->get_result()->fetch_assoc()['first_name'] ?? 'the resident';
         $hash = password_hash($temp, PASSWORD_DEFAULT);
         $st = $conn->prepare('UPDATE users us JOIN residents r ON r.user_id = us.user_id SET us.password_hash = ?, us.reset_token_hash = NULL, us.reset_expires_at = NULL WHERE r.resident_id = ?');
         $st->bind_param('si', $hash, $rid); $st->execute();
-        flash('warning', 'Temporary password: ' . $temp . '  Give it to the resident in person and ask them to change it in Account settings right away. It will not be shown again.');
+        flash('warning', 'Temporary password for ' . $who . ': ' . $temp . '. Give it to them in person and ask them to change it in Account settings right away. It will not be shown again.');
     }
     redirect('admin/residents.php?tab=' . $tab . (isset($_GET['q']) ? '&q=' . urlencode($_GET['q']) : ''));
 }
