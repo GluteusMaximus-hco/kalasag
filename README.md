@@ -86,6 +86,23 @@ Phones on the same Wi-Fi can open it using the laptop's IP address (`hostname -I
 
 Phones only share GPS on https. While it runs locally on plain http, the report pin is placed by tapping the map. GPS will work once the system is hosted online with https.
 
+## Running it on Windows (XAMPP)
+
+1. Install XAMPP, then copy the `kalasag` folder into `C:\xampp\htdocs\`
+2. Open the XAMPP Control Panel and start **Apache** and **MySQL**
+3. Open phpMyAdmin on local host in the browser, open the **Import** tab (without picking a database) and import `database\schema.sql`
+4. In the **SQL** tab, run the same CREATE USER / GRANT line from step 4 of the Ubuntu setup
+5. Make the admin account in Command Prompt:
+
+```
+cd C:\xampp\htdocs\kalasag
+C:\xampp\php\php.exe setup\create_admin.php
+```
+
+6. Open KALASAG on local host in the browser (the kalasag folder)
+
+For SMS on XAMPP, curl has to be on: in XAMPP, click **Config** next to Apache, open **PHP (php.ini)**, remove the `;` in front of `extension=curl`, then restart Apache. The `config\sms.php` and `config\mail.php` files are made with `copy` and edited in Notepad (with file name extensions shown, so they don't end up as `.php.txt`).
+
 ## What's built
 
 **Residents** (`resident/`)
@@ -154,8 +171,8 @@ If SMS or email is not set up, the system still works normally, it just skips se
 The texts are sent by the SMS Gateway for Android app (free and open source). The system sends the message to the app over the internet, then the phone texts it using its own SIM and load.
 
 1. On the Android phone, open sms-gate.app in Chrome, tap **Download App**, and install the APK (allow "Install unknown apps" for Chrome when Android asks)
-2. Open it, allow SMS permission, turn on **Cloud server**, then tap **Online**
-3. The Home tab shows a **username** and **password**
+2. Open it, allow SMS permission, turn on **Cloud server**, then tap **Start** (some versions show an **Offline** button that turns **Online**)
+3. The Cloud server part of the Home tab shows a **username** and **password** (made by the app, no sign up needed)
 4. On the laptop:
 
 ```bash
@@ -173,7 +190,7 @@ The phone needs mobile data or Wi-Fi, load or an unli text promo, and the app le
 ### Email setup (Gmail)
 
 1. Make a separate Gmail for the system (not someone's personal one)
-2. Turn on 2-Step Verification, then go to Google Account > Security > App passwords and make one
+2. Turn on 2-Step Verification, then make an app password at myaccount.google.com/apppasswords. The app password is the 16-letter code Google shows, not the normal Gmail password
 3. Copy the settings file and fill it in:
 
 ```bash
@@ -248,7 +265,9 @@ sudo mysql kalasag_db -e "UPDATE users SET password_hash='$NEWHASH' WHERE userna
 
 **SMS check sent but no text arrived**: the phone has no load, no internet, or the app was closed by battery saver. Open the app and check its Messages tab
 
-**Email check fails**: the app password is wrong or has spaces, or 2-Step Verification was turned off (this deletes app passwords)
+**Email check says "Gmail rejected the login"**: MAIL_PASSWORD has the normal Gmail password instead of the 16-letter app password, or the app password was deleted (turning off 2-Step Verification deletes them). Make a new app password and paste it again
+
+**Email check says "Could not reach Gmail"**: no internet, or php-openssl is off
 
 **SMS check says "php-curl is not installed"**: run `sudo apt install php-curl` then restart Apache (or the php -S command)
 
