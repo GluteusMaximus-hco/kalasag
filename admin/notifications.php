@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             [$ok, $detail] = email_send($test_email, $u['full_name'], 'KALASAG: Email alerts are on', 'Email alerts are on',
                 ['You will get emergency report updates and announcements from Barangay 172 at this address.'], app_url(), 'check', 'Open KALASAG');
-            flash($ok ? 'success' : 'danger', $ok ? 'Email check sent to ' . $test_email . '. Look in the inbox (and spam folder).' : 'Email failed: ' . $detail . '. Check config/mail.php.');
+            flash($ok ? 'success' : 'danger', $ok ? 'Email check sent to ' . $test_email . '. Look in the inbox (and spam folder).' : 'Email failed: ' . $detail . '.');
         }
     }
     redirect('admin/notifications.php');

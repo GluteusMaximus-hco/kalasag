@@ -18,6 +18,19 @@ function mail_ready() {
     return $ready;
 }
 
+// why the last email failed, in plain words, so the admin page can show it
+function mail_reason($raw) {
+    $r = strtolower($raw);
+    if (str_contains($r, 'authenticate') || str_contains($r, 'username and password not accepted') || str_contains($r, '535'))
+        return 'Gmail rejected the login. Check MAIL_USERNAME and use the 16-letter app password (not the normal Gmail password)';
+    if (str_contains($r, 'connect') || str_contains($r, 'timed out'))
+        return 'Could not reach Gmail. Check the internet connection, and that php-openssl is on';
+    if (str_contains($r, 'invalid address') || str_contains($r, 'from address'))
+        return 'MAIL_USERNAME is not a valid email address';
+    return $raw !== '' ? $raw : 'unknown error';
+}
+$GLOBALS['mail_last_error'] = '';
+
 // shared gmail setup for both senders below
 function mailer_new() {
     $m = new PHPMailer(true);
@@ -51,7 +64,9 @@ function send_mail_bcc($emails, $subject, $html, $text) {
         $m->send();
         return true;
     } catch (MailException $ex) {
-        error_log('Mail (bcc) failed: ' . ($m ? $m->ErrorInfo : $ex->getMessage()));
+        $raw = $m && $m->ErrorInfo ? $m->ErrorInfo : $ex->getMessage();
+        $GLOBALS['mail_last_error'] = mail_reason($raw);
+        error_log('Mail (bcc) failed: ' . $raw);
         return false;
     }
 }
@@ -71,7 +86,9 @@ function send_mail($to, $to_name, $subject, $html, $text) {
         $m->send();
         return true;
     } catch (MailException $ex) {
-        error_log('Mail failed: ' . ($m ? $m->ErrorInfo : $ex->getMessage()));
+        $raw = $m && $m->ErrorInfo ? $m->ErrorInfo : $ex->getMessage();
+        $GLOBALS['mail_last_error'] = mail_reason($raw);
+        error_log('Mail failed: ' . $raw);
         return false;
     }
 }

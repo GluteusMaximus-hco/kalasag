@@ -134,8 +134,9 @@ function email_send($to, $name, $subject, $title, $paragraphs, $link = null, $ev
     if (!mail_ready()) { notify_log('email', $event, $to, false, 'skipped, email not set up'); return [false, 'Email is not set up']; }
     $text = $title . "\n\n" . implode("\n\n", (array)$paragraphs) . ($link ? "\n\n" . $link : '');
     $ok = send_mail($to, $name, $subject, email_html($title, $paragraphs, $link, $link_text), $text);
-    notify_log('email', $event, $to, $ok, $ok ? 'sent' : 'failed, check config/mail.php and the server error log');
-    return [$ok, $ok ? 'sent' : 'failed'];
+    $why = $GLOBALS['mail_last_error'] ?? 'failed';
+    notify_log('email', $event, $to, $ok, $ok ? 'sent' : $why);
+    return [$ok, $ok ? 'sent' : $why];
 }
 
 // many people in one go (announcements), everyone in BCC so nobody sees the others' emails
@@ -146,7 +147,7 @@ function email_send_bcc($emails, $subject, $title, $paragraphs, $link = null, $e
     $all_ok = true;
     foreach (array_chunk($emails, 50) as $group) {
         $ok = send_mail_bcc($group, $subject, email_html($title, $paragraphs, $link), $title . "\n\n" . implode("\n\n", (array)$paragraphs));
-        notify_log('email', $event, count($group) . ' people', $ok, $ok ? 'sent (bcc)' : 'failed');
+        notify_log('email', $event, count($group) . ' people', $ok, $ok ? 'sent (bcc)' : ($GLOBALS['mail_last_error'] ?? 'failed'));
         $all_ok = $all_ok && $ok;
     }
     return [$all_ok, $all_ok ? 'sent' : 'some failed'];
