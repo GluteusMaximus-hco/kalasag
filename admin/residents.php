@@ -95,7 +95,7 @@ include __DIR__ . '/../includes/header.php';
                         <td><div class="fw-semibold"><?= e($r['first_name'] . ' ' . $r['last_name']) ?></div>
                             <div class="small text-secondary">@<?= e($r['username']) ?> &middot; joined <?= e(date('M j, Y', strtotime($r['created_at']))) ?></div></td>
                         <td class="small"><?= e($r['contact_no']) ?><?= $r['email'] ? '<br>' . e($r['email']) : '' ?></td>
-                        <td class="small"><?= $r['address'] ? e($r['address']) . ($r['purok'] ? ', ' . e($r['purok']) : '') : '<span class="text-secondary">Not set up</span>' ?>
+                        <td class="small"><?= $r['address'] ? e($r['address']) . ($r['purok'] ? ', ' . e(stripos($r['purok'], 'purok') === 0 ? $r['purok'] : 'Purok ' . $r['purok']) : '') : '<span class="text-secondary">Not set up</span>' ?>
                             <?php if ($flags): ?><div><span class="prio-flag"><?= e(implode(', ', $flags)) ?></span></div><?php endif; ?></td>
                         <td><?= (int)$r['reports'] ?></td>
                         <td><?= $r['is_verified'] ? '<span class="evac-status open"><i class="bi bi-patch-check-fill"></i> Verified</span>' : '<span class="evac-status full">Not verified</span>' ?></td>

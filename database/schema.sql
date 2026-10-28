@@ -20,7 +20,7 @@ CREATE TABLE users (
     role           ENUM('admin','resident','responder') NOT NULL DEFAULT 'resident',
     full_name      VARCHAR(120) NOT NULL,
     contact_no     VARCHAR(20),
-    email          VARCHAR(120) NULL UNIQUE,      -- optional, only used for forgot password
+    email          VARCHAR(120) NULL UNIQUE,      -- optional, for forgot password and email updates
     is_active      TINYINT(1) NOT NULL DEFAULT 1,
     created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     -- forgot password: we only save the HASH of the reset link token, never the token itself

@@ -10,6 +10,7 @@ $old = ['first_name' => '', 'last_name' => '', 'birthdate' => '', 'contact_no' =
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
     foreach ($old as $k => $_) $old[$k] = trim($_POST[$k] ?? '');
+    $old['contact_no'] = clean_phone($old['contact_no']);
     $password = $_POST['password'] ?? '';
     $confirm  = $_POST['confirm'] ?? '';
 

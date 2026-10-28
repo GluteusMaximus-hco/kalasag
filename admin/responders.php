@@ -45,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'create' || $action === 'update') {
         foreach (['team_name', 'full_name', 'username', 'contact_no', 'availability'] as $k) $d[$k] = trim($_POST[$k] ?? '');
+        $d['contact_no'] = clean_phone($d['contact_no']);
         $d['caps'] = array_values(array_intersect(array_map('intval', (array)($_POST['caps'] ?? [])), $type_ids));
         $pw = $_POST['password'] ?? '';
 

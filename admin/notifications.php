@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('danger', 'Use an 11-digit mobile number starting with 09.');
         } else {
             [$ok, $detail] = sms_send($test_phone, 'KALASAG Barangay 172: SMS alerts are on. You will get emergency updates and announcements on this number.', 'check');
-            flash($ok ? 'success' : 'danger', $ok ? 'SMS check sent to the phone app (' . $detail . '). It should arrive in a few seconds.' : 'SMS failed: ' . $detail);
+            flash($ok ? 'success' : 'danger', $ok ? 'SMS check sent to the phone. It should arrive in a few seconds.' : 'SMS failed: ' . $detail);
         }
     } elseif ($action === 'test_email') {
         $test_email = trim($_POST['email'] ?? '');
@@ -41,6 +41,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $log = notify_log_read(60);
+
+// the log saves short keys like "reporter: dispatched", show them in normal words
+function send_label($ev) {
+    $what = ['received' => 'Report received', 'acknowledged' => 'Acknowledged', 'dispatched' => 'Team on the way', 'arrived' => 'Team arrived',
+             'resolved' => 'Resolved', 'cancelled' => 'Report closed', 'update' => 'Remark', 'message' => 'New message'];
+    if (str_starts_with($ev, 'reporter: ')) return 'Reporter: ' . ($what[substr($ev, 10)] ?? substr($ev, 10));
+    return ['admin: new report' => 'Admins: new report alert', 'team: dispatched' => 'Team: new assignment', 'announcement' => 'Announcement',
+            'password reset' => 'Password reset link', 'check' => 'SMS/email check', 'test' => 'SMS/email check'][$ev] ?? ucfirst($ev);
+}
 $sms_on = sms_ready();
 $mail_on = mail_ready();
 
@@ -111,16 +120,16 @@ include __DIR__ . '/../includes/header.php';
             <?php else: ?>
                 <div class="table-wrap">
                     <table class="table table-sm align-middle mb-0">
-                        <thead><tr><th>When</th><th>Type</th><th>For</th><th>To</th><th>Result</th></tr></thead>
+                        <thead><tr><th>When</th><th>Type</th><th>Message</th><th>To</th><th>Result</th></tr></thead>
                         <tbody>
                             <?php foreach ($log as $l): ?>
                                 <tr>
                                     <td class="text-nowrap small"><?= e(time_ago($l['at'] ?? '')) ?></td>
-                                    <td class="text-nowrap"><i class="bi <?= ($l['ch'] ?? '') === 'sms' ? 'bi-chat-dots' : (($l['ch'] ?? '') === 'email' ? 'bi-envelope' : 'bi-gear') ?> me-1"></i><?= e(strtoupper($l['ch'] ?? '')) ?></td>
-                                    <td class="small"><?= e($l['ev'] ?? '') ?></td>
+                                    <td class="text-nowrap"><i class="bi <?= ($l['ch'] ?? '') === 'sms' ? 'bi-chat-dots' : (($l['ch'] ?? '') === 'email' ? 'bi-envelope' : 'bi-gear') ?> me-1"></i><?= e(['sms' => 'SMS', 'email' => 'Email', 'system' => 'System'][$l['ch'] ?? ''] ?? '') ?></td>
+                                    <td class="small"><?= e(send_label($l['ev'] ?? '')) ?></td>
                                     <td class="small text-nowrap"><?= e($l['to'] ?? '') ?></td>
                                     <td class="small"><span class="badge <?= !empty($l['ok']) ? 'text-bg-success' : 'text-bg-secondary' ?>"><?= !empty($l['ok']) ? 'Sent' : 'Not sent' ?></span>
-                                        <div class="text-secondary"><?= e($l['detail'] ?? '') ?></div></td>
+                                        <?php if (empty($l["ok"])): // only say why when it failed ?><div class="text-secondary"><?= e(ucfirst($l['detail'] ?? '')) ?></div><?php endif; ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>

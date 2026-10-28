@@ -47,6 +47,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'role'      => $row['role'],
                 'full_name' => $row['full_name'],
             ];
+            // go back to the page they were trying to open, only if it's a page of this site
+            $next = $_SESSION['after_login'] ?? '';
+            unset($_SESSION['after_login']);
+            if ($next !== '' && str_starts_with($next, BASE_URL . '/') && !str_starts_with($next, '//') && !str_contains($next, '\\')) {
+                header('Location: ' . $next);
+                exit;
+            }
             redirect(home_for($row['role']));
         }
     }

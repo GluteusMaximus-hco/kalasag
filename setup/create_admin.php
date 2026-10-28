@@ -24,6 +24,10 @@ echo "== KALASAG: create admin account ==" . PHP_EOL;
 
 $full_name   = ask('Full name');
 $contact     = ask('Mobile number (09XXXXXXXXX, new report alerts are texted here)');
+// same cleanup as the website, so "0917 123 4567" or "+63917..." also works
+$d = preg_replace('/[^\d+]/', '', $contact);
+if (preg_match('/^\+?63(9\d{9})$/', $d, $m)) $d = '0' . $m[1];
+$contact = $d;
 $email       = ask('Email (optional, for forgot password and email alerts, press Enter to skip)');
 $position    = ask('Position (ex. Barangay Secretary)');
 $designation = ask('Designation (ex. BDRRM Focal Person)');

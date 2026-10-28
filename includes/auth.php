@@ -102,6 +102,8 @@ function home_for($role) {
 function require_role(...$roles) {
     $u = current_user();
     if (!$u) {
+        // remember the page (like a link from a text or email) so login can send them back to it
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') $_SESSION['after_login'] = $_SERVER['REQUEST_URI'] ?? '';
         flash('warning', 'Log in first to open that page.');
         redirect('login.php');
     }
@@ -116,6 +118,13 @@ function require_role(...$roles) {
 // so text people typed (like an address with "</script>" in it) cant break out of the script block
 function js_json($v) {
     return json_encode($v, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+}
+
+// people type numbers like "0917 123 4567", "0917-123-4567" or "+63917...", turn them all into 09XXXXXXXXX
+function clean_phone($s) {
+    $d = preg_replace('/[^\d+]/', '', trim((string)$s));
+    if (preg_match('/^\+?63(9\d{9})$/', $d, $m)) return '0' . $m[1];
+    return $d;
 }
 
 // strict YYYY-MM-DD check, createFromFormat alone lets "2026-02-31" through (it rolls over to March)

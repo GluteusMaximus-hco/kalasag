@@ -174,7 +174,8 @@ include __DIR__ . '/../includes/header.php';
                                 <time datetime="<?= e($a['changed_at']) ?>"><?= e(time_ago($a['changed_at'])) ?></time>
                                 <div>
                                     <strong><?= e($a['type_name']) ?> #<?= (int)$a['incident_id'] ?></strong>
-                                    <?php if ($a['old_status'] === $a['new_status']): ?>got an update
+                                    <?php if ($a['old_status'] === null): ?>was reported
+                                    <?php elseif ($a['old_status'] === $a['new_status']): ?>got an update
                                     <?php else: ?>marked <span class="st st-<?= e($a['new_status']) ?>"><?= e(status_label($a['new_status'])) ?></span><?php endif; ?>
                                     <?php if ($a['remarks']): ?><div class="small"><?= e($a['remarks']) ?></div><?php endif; ?>
                                     <?php if ($a['who'] !== 'System'): ?><div class="text-secondary small">by <?= e($a['who']) ?></div><?php endif; ?>

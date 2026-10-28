@@ -43,8 +43,11 @@ function app_url($path = '') {
 // 0917*****67, the log is for checking delivery, it doesnt need full numbers or emails
 function mask_contact($c) {
     if (strpos($c, '@') !== false) { [$u, $d] = explode('@', $c, 2); return substr($u, 0, 2) . '***@' . $d; }
-    return strlen($c) > 6 ? substr($c, 0, 4) . str_repeat('*', strlen($c) - 6) . substr($c, -2) : $c;
+    if (!preg_match('/^\+?\d{7,}$/', $c)) return $c;   // not a number (like "12 people"), leave it
+    return substr($c, 0, 4) . str_repeat('*', strlen($c) - 6) . substr($c, -2);
 }
+
+function people_count($n) { return $n . ($n === 1 ? ' person' : ' people'); }
 
 function notify_log($channel, $event, $to, $ok, $detail = '') {
     $dir = dirname(NOTIFY_LOG);
@@ -104,7 +107,7 @@ function sms_send($numbers, $text, $event = 'sms') {
         $ok = $code >= 200 && $code < 300;
         if ($ok) {
             $res = json_decode((string)$body, true);
-            $last = 'queued on phone' . (!empty($res['id']) ? ' (' . $res['id'] . ')' : '');
+            $last = 'Sent to the phone' . (!empty($res['id']) ? ' (' . $res['id'] . ')' : '');
         } else {
             $res = json_decode((string)$body, true);
             $last = $err ?: ('HTTP ' . $code . ($code === 401 ? ' wrong username/password' : '') . (!empty($res['message']) ? ': ' . $res['message'] : ''));
@@ -145,11 +148,11 @@ function email_send($to, $name, $subject, $title, $paragraphs, $link = null, $ev
 function email_send_bcc($emails, $subject, $title, $paragraphs, $link = null, $event = 'email') {
     $emails = array_values(array_unique(array_filter((array)$emails, fn($m) => filter_var($m, FILTER_VALIDATE_EMAIL))));
     if (!$emails) return [false, 'no emails'];
-    if (!mail_ready()) { notify_log('email', $event, count($emails) . ' people', false, 'skipped, email not set up'); return [false, 'Email is not set up']; }
+    if (!mail_ready()) { notify_log('email', $event, people_count(count($emails)), false, 'skipped, email not set up'); return [false, 'Email is not set up']; }
     $all_ok = true;
     foreach (array_chunk($emails, 50) as $group) {
         $ok = send_mail_bcc($group, $subject, email_html($title, $paragraphs, $link), $title . "\n\n" . implode("\n\n", (array)$paragraphs));
-        notify_log('email', $event, count($group) . ' people', $ok, $ok ? 'sent (bcc)' : ($GLOBALS['mail_last_error'] ?? 'failed'));
+        notify_log('email', $event, people_count(count($group)), $ok, $ok ? 'sent (bcc)' : ($GLOBALS['mail_last_error'] ?? 'failed'));
         $all_ok = $all_ok && $ok;
     }
     return [$all_ok, $all_ok ? 'sent' : 'some failed'];
@@ -221,7 +224,7 @@ function notify_reporter($conn, $incident_id, $event, $extra = []) {
         $team = $extra['team'] ?? 'A response team';
         switch ($event) {
             case 'received':
-                $sms = "KALASAG: Barangay 172 received your $what." . ($c['tracking_code'] ? ' Tracking code: ' . $c['tracking_code'] . '.' : ' We will update you here.');
+                $sms = "KALASAG: Barangay 172 received your $what." . ($c['tracking_code'] ? ' Tracking code: ' . $c['tracking_code'] . '.' : ' We will text you updates.');
                 $title = 'We received your report';
                 $body = ["Barangay 172 received your $what. You will get an update when the barangay acts on it."];
                 break;

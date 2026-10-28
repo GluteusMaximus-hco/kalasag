@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // ---------- profile ----------
     if ($action === 'profile') {
         $E = &$errors['profile'];
-        $form['contact_no'] = trim($_POST['contact_no'] ?? '');
+        $form['contact_no'] = clean_phone($_POST['contact_no'] ?? '');
         $form['email'] = trim($_POST['email'] ?? '');
 
         if ($u['role'] === 'resident') {

@@ -5,7 +5,9 @@ require_once __DIR__ . '/includes/incidents.php';
 require_once __DIR__ . '/includes/partials.php';
 require_once __DIR__ . '/includes/auth_layout.php';
 
-$code = strtoupper(trim($_GET['code'] ?? $_POST['code'] ?? ''));
+$code = strtoupper(preg_replace('/\s+/', '', $_GET['code'] ?? $_POST['code'] ?? ''));
+// "7KK2WM" works too, people forget the KLS- part
+if (preg_match('/^[A-Z0-9]{6}$/', $code)) $code = 'KLS-' . $code;
 $inc = null;
 $error = '';
 

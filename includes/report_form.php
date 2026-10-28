@@ -35,6 +35,7 @@ function validate_report($post, $files, $types, $guest) {
     if ($d['gps_accuracy'] !== '' && filter_var($d['gps_accuracy'], FILTER_VALIDATE_FLOAT) === false) $d['gps_accuracy'] = '';
 
     if ($guest) {
+        if ($d['guest_contact'] !== '') $d['guest_contact'] = clean_phone($d['guest_contact']);
         if (mb_strlen($d['guest_name']) > 120) $e['guest_name'] = 'Keep your name under 120 characters.';
         if ($d['guest_contact'] !== '' && !preg_match('/^09\d{9}$/', $d['guest_contact'])) $e['guest_contact'] = 'Use an 11-digit mobile number starting with 09, or leave it blank.';
     }
