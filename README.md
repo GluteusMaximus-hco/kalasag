@@ -37,7 +37,7 @@ KALASAG (Tanggulan ng Barangay) lets residents report floods, fires, vehicular a
 - **Maps:** Leaflet.js with OpenStreetMap
 - **Charts:** Chart.js
 - **Email:** PHPMailer with Gmail
-- **SMS:** SMS Gateway for Android
+- **SMS:** [SMS Gateway for Android](https://sms-gate.app), a free app that turns an Android phone into the system's SMS sender. KALASAG sends each text to the app over the internet, and the phone texts it out using its own SIM and load
 - **Tools:** Ubuntu, Apache, VS Code, Git / GitHub, phpMyAdmin
 
 ## How to run it
@@ -78,4 +78,4 @@ C:\xampp\php\php.exe setup\create_admin.php
 
 ### SMS and email
 
-The system runs without them. To turn them on, copy `config/sms.example.php` to `config/sms.php` and `config/mail.example.php` to `config/mail.php`, then fill in the SMS Gateway login and the Gmail app password. Both files are kept off GitHub.
+The system runs without them. To turn them on, copy `config/sms.example.php` to `config/sms.php` and `config/mail.example.php` to `config/mail.php`, then fill in the [SMS Gateway](https://sms-gate.app) login (shown in the app after turning on Cloud server) and the Gmail app password. Both files are kept off GitHub.
