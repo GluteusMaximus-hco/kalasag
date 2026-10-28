@@ -84,14 +84,16 @@ function save_photos($conn, $incident_id, $files) {
                 // so rotate the actual pixels first or the photo shows up sideways
                 if ($mime === 'image/jpeg' && function_exists('exif_read_data')) {
                     $exif = @exif_read_data($tmp);
+                    // if rotating fails (out of memory on a huge photo) just keep it as is
+                    $turn = fn($deg) => imagerotate($img, $deg, 0) ?: $img;
                     switch ((int)($exif['Orientation'] ?? 1)) {
                         case 2: imageflip($img, IMG_FLIP_HORIZONTAL); break;
-                        case 3: $img = imagerotate($img, 180, 0); break;
+                        case 3: $img = $turn(180); break;
                         case 4: imageflip($img, IMG_FLIP_VERTICAL); break;
-                        case 5: imageflip($img, IMG_FLIP_HORIZONTAL); $img = imagerotate($img, 90, 0); break;
-                        case 6: $img = imagerotate($img, -90, 0); break;
-                        case 7: imageflip($img, IMG_FLIP_HORIZONTAL); $img = imagerotate($img, -90, 0); break;
-                        case 8: $img = imagerotate($img, 90, 0); break;
+                        case 5: imageflip($img, IMG_FLIP_HORIZONTAL); $img = $turn(90); break;
+                        case 6: $img = $turn(-90); break;
+                        case 7: imageflip($img, IMG_FLIP_HORIZONTAL); $img = $turn(-90); break;
+                        case 8: $img = $turn(90); break;
                     }
                 }
                 // see-through png/webp would turn black as jpg, so paint it on white first
@@ -106,7 +108,7 @@ function save_photos($conn, $incident_id, $files) {
                 $w = imagesx($img); $h = imagesy($img); $max = 1600;
                 if ($w > $max || $h > $max) {
                     $scale = $max / max($w, $h);
-                    $img = imagescale($img, (int)($w * $scale), (int)($h * $scale));
+                    $img = imagescale($img, (int)($w * $scale), (int)($h * $scale)) ?: $img;
                 }
                 $file = $name . '.jpg';
                 $saved = imagejpeg($img, UPLOAD_DIR . '/' . $file, 82);

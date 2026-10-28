@@ -50,10 +50,11 @@ $st->bind_param('sssss', $q, $like, $like, $like, $like);
 $st->execute();
 $residents = $st->get_result()->fetch_all(MYSQLI_ASSOC);
 
-$households = $conn->query("SELECT h.*, COUNT(r.resident_id) AS members,
-        GROUP_CONCAT(CONCAT(r.first_name, ' ', r.last_name) SEPARATOR ', ') AS names
-    FROM households h LEFT JOIN residents r ON r.household_id = h.household_id
-    GROUP BY h.household_id ORDER BY h.vulnerability_score DESC, h.address")->fetch_all(MYSQLI_ASSOC);
+// subqueries instead of GROUP BY so it works even with strict ONLY_FULL_GROUP_BY
+$households = $conn->query("SELECT h.*,
+        (SELECT COUNT(*) FROM residents r WHERE r.household_id = h.household_id) AS members,
+        (SELECT GROUP_CONCAT(CONCAT(r.first_name, ' ', r.last_name) SEPARATOR ', ') FROM residents r WHERE r.household_id = h.household_id) AS names
+    FROM households h ORDER BY h.vulnerability_score DESC, h.address")->fetch_all(MYSQLI_ASSOC);
 
 $counts = $conn->query("SELECT (SELECT COUNT(*) FROM residents) AS residents, (SELECT COUNT(*) FROM residents WHERE is_verified = 0) AS unverified,
         (SELECT COUNT(*) FROM households) AS households, (SELECT COUNT(*) FROM households WHERE vulnerability_score > 0) AS vulnerable")->fetch_assoc();

@@ -65,7 +65,7 @@ function notify_log($channel, $event, $to, $ok, $detail = '') {
 // newest first
 function notify_log_read($limit = 50) {
     if (!is_file(NOTIFY_LOG)) return [];
-    $lines = array_slice(file(NOTIFY_LOG, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES), -$limit);
+    $lines = array_slice(@file(NOTIFY_LOG, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [], -$limit);
     return array_reverse(array_values(array_filter(array_map(fn($l) => json_decode($l, true), $lines))));
 }
 
@@ -124,7 +124,9 @@ function sms_send($numbers, $text, $event = 'sms') {
 function email_html($title, $paragraphs, $link = null, $link_text = 'Open KALASAG') {
     $p = '';
     foreach ((array)$paragraphs as $para) $p .= '<p style="margin:0 0 12px;line-height:1.5">' . nl2br(e($para)) . '</p>';
-    $btn = $link ? '<p style="margin:18px 0"><a href="' . e($link) . '" style="background:#57331F;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;font-weight:600">' . e($link_text) . '</a></p>' : '';
+    $btn = $link ? '<p style="margin:18px 0"><a href="' . e($link) . '" style="background:#57331F;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;font-weight:600">' . e($link_text) . '</a></p>'
+        // some email apps block buttons, so the plain link is there too
+        . '<p style="margin:0 0 12px;font-size:12px;color:#7A6A5C">If the button doesn\'t work, open this link: <a href="' . e($link) . '" style="color:#57331F;word-break:break-all">' . e($link) . '</a></p>' : '';
     return '<div style="font-family:Arial,sans-serif;color:#2B1B12;max-width:560px">'
         . '<div style="background:#1C110B;color:#EAD7AE;padding:14px 18px;font-weight:700;letter-spacing:1px">KALASAG &middot; Barangay 172, Zone 17</div>'
         . '<div style="padding:18px;border:1px solid #E5D8C6;border-top:0">'
@@ -151,7 +153,7 @@ function email_send_bcc($emails, $subject, $title, $paragraphs, $link = null, $e
     if (!mail_ready()) { notify_log('email', $event, people_count(count($emails)), false, 'skipped, email not set up'); return [false, 'Email is not set up']; }
     $all_ok = true;
     foreach (array_chunk($emails, 50) as $group) {
-        $ok = send_mail_bcc($group, $subject, email_html($title, $paragraphs, $link), $title . "\n\n" . implode("\n\n", (array)$paragraphs));
+        $ok = send_mail_bcc($group, $subject, email_html($title, $paragraphs, $link), $title . "\n\n" . implode("\n\n", (array)$paragraphs) . ($link ? "\n\n" . $link : ''));
         notify_log('email', $event, people_count(count($group)), $ok, $ok ? 'sent (bcc)' : ($GLOBALS['mail_last_error'] ?? 'failed'));
         $all_ok = $all_ok && $ok;
     }
@@ -320,7 +322,7 @@ function notify_announcement($conn, $title, $body, $category) {
         if (!$rows) return;
         // no extra period if the title already ends with one (or ! or ?)
         $t = sms_cut($title, 60);
-        $sms = 'KALASAG ' . ucfirst($category) . ': ' . $t . (preg_match('/[.!?]$/', $t) ? ' ' : '. ') . sms_cut($body, 80);
+        $sms = 'KALASAG ' . ucfirst($category) . ': ' . $t . (preg_match('/[.!?]$/', $t) ? ' ' : '. ') . sms_cut($body, 75);   // 75 keeps even the longest one under 160
         sms_send(array_column($rows, 'phone'), $sms, 'announcement');
         email_send_bcc(array_column($rows, 'email'), 'KALASAG ' . ucfirst($category) . ': ' . $title, $title, [$body], app_url('resident/home.php'), 'announcement');
     });

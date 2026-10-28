@@ -34,7 +34,7 @@ try {
     $by_type = $conn->query("SELECT t.type_name, COUNT(i.incident_id) AS total
             FROM incident_types t
             LEFT JOIN incidents i ON i.type_id = t.type_id AND i.date_reported >= NOW() - INTERVAL 30 DAY
-            GROUP BY t.type_id ORDER BY total DESC, t.type_name")->fetch_all(MYSQLI_ASSOC);
+            GROUP BY t.type_id, t.type_name ORDER BY total DESC, t.type_name")->fetch_all(MYSQLI_ASSOC);
 
     // latest status changes
     $activity = $conn->query("SELECT l.old_status, l.new_status, l.remarks, l.changed_at, t.type_name, l.incident_id,
@@ -45,12 +45,10 @@ try {
             LEFT JOIN users us ON us.user_id = l.updated_by
             ORDER BY l.changed_at DESC LIMIT 7")->fetch_all(MYSQLI_ASSOC);
 
+    // subqueries instead of GROUP BY so it works even with strict ONLY_FULL_GROUP_BY (mysql 8, some hosts)
     $responders = $conn->query("SELECT rp.team_name, rp.availability,
-                GROUP_CONCAT(t.type_name ORDER BY t.type_name SEPARATOR ', ') AS handles
+                (SELECT GROUP_CONCAT(t.type_name ORDER BY t.type_name SEPARATOR ', ') FROM responder_capabilities c JOIN incident_types t ON t.type_id = c.type_id WHERE c.responder_id = rp.responder_id) AS handles
             FROM responders rp
-            LEFT JOIN responder_capabilities c ON c.responder_id = rp.responder_id
-            LEFT JOIN incident_types t ON t.type_id = c.type_id
-            GROUP BY rp.responder_id
             ORDER BY FIELD(rp.availability, 'available', 'deployed', 'off_duty'), rp.team_name")->fetch_all(MYSQLI_ASSOC);
 } catch (mysqli_sql_exception $ex) {
     error_log('dashboard: ' . $ex->getMessage());
@@ -132,7 +130,7 @@ include __DIR__ . '/../includes/header.php';
                                     <div class="q-meta">
                                         <?php if ($q['urgency']): ?><span class="urg urg-<?= e($q['urgency']) ?>"><?= e(ucfirst($q['urgency'])) ?></span><?php endif; ?>
                                         <?php if ($q['is_priority']): ?><span class="prio-flag"><i class="bi bi-shield-fill-exclamation"></i>Priority</span><?php endif; ?>
-                                        <span><?= e($q['landmark'] ?: 'No landmark') ?></span>
+                                        <span class="q-land"><?= e($q['landmark'] ?: 'No landmark') ?></span>
                                         <span>&middot;</span>
                                         <span><?= e(time_ago($q['date_reported'])) ?></span>
                                         <span>&middot;</span>

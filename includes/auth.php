@@ -2,10 +2,21 @@
 // session + login helpers, include this at the top of every page
 require_once __DIR__ . '/../config/db.php';
 
+// basic safety headers on every page
+if (!headers_sent()) {
+    header('X-Frame-Options: SAMEORIGIN');          // other sites cant load KALASAG inside a frame and trick clicks
+    header('X-Content-Type-Options: nosniff');
+    // other sites only see "kalasag's address", never the full link, so tracking codes and reset links dont leak
+    // (not "no referrer" at all, the openstreetmap tile servers need it or the maps go blank)
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+}
+
 if (session_status() === PHP_SESSION_NONE) {
+    $on_https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https';
     session_set_cookie_params([
         'httponly' => true,     // js can't read the session cookie
         'samesite' => 'Lax',
+        'secure'   => $on_https, // on https the login cookie never goes over plain http
     ]);
     session_start();
 }

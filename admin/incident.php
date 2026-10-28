@@ -142,13 +142,10 @@ $on_scene = array_column(array_filter($responses, fn($r) => $r['cleared_at'] ===
 
 // teams that handle this type first, then available ones first
 $st = $conn->prepare("SELECT rp.responder_id, rp.team_name, rp.availability,
-            MAX(c.type_id = ?) AS handles,
-            GROUP_CONCAT(t.type_name ORDER BY t.type_name SEPARATOR ', ') AS types
+            EXISTS (SELECT 1 FROM responder_capabilities c WHERE c.responder_id = rp.responder_id AND c.type_id = ?) AS handles,
+            (SELECT GROUP_CONCAT(t.type_name ORDER BY t.type_name SEPARATOR ', ') FROM responder_capabilities c JOIN incident_types t ON t.type_id = c.type_id WHERE c.responder_id = rp.responder_id) AS types
         FROM responders rp
         JOIN users us ON us.user_id = rp.user_id AND us.is_active = 1
-        LEFT JOIN responder_capabilities c ON c.responder_id = rp.responder_id
-        LEFT JOIN incident_types t ON t.type_id = c.type_id
-        GROUP BY rp.responder_id
         ORDER BY handles DESC, FIELD(rp.availability, 'available', 'deployed', 'off_duty'), rp.team_name");
 $st->bind_param('i', $inc['type_id']);
 $st->execute();

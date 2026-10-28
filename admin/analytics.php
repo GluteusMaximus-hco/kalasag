@@ -37,7 +37,7 @@ $arrive = one($conn, "SELECT ROUND(AVG(TIMESTAMPDIFF(MINUTE, i.date_reported, r.
         ON r.incident_id = i.incident_id WHERE i.date_reported >= ?", $since);
 
 $by_type = all($conn, "SELECT t.type_name, COUNT(i.incident_id) AS n FROM incident_types t
-        LEFT JOIN incidents i ON i.type_id = t.type_id AND i.date_reported >= ? GROUP BY t.type_id ORDER BY n DESC, t.type_name", $since);
+        LEFT JOIN incidents i ON i.type_id = t.type_id AND i.date_reported >= ? GROUP BY t.type_id, t.type_name ORDER BY n DESC, t.type_name", $since);
 $by_status_raw = all($conn, "SELECT status, COUNT(*) AS n FROM incidents WHERE date_reported >= ? GROUP BY status", $since);
 $by_status = array_fill_keys(STATUSES, 0);
 foreach ($by_status_raw as $r) $by_status[$r['status']] = (int)$r['n'];
@@ -54,12 +54,14 @@ $teams = all($conn, "SELECT rp.team_name, COUNT(r.response_id) AS jobs,
         ROUND(AVG(TIMESTAMPDIFF(MINUTE, r.dispatched_at, r.arrived_at))) AS to_arrive,
         COALESCE(SUM(r.action_taken IS NOT NULL), 0) AS cleared
     FROM responders rp LEFT JOIN incident_responses r ON r.responder_id = rp.responder_id AND r.dispatched_at >= ?
-    GROUP BY rp.responder_id ORDER BY jobs DESC, rp.team_name", $since);
+    GROUP BY rp.responder_id, rp.team_name ORDER BY jobs DESC, rp.team_name", $since);
 
 $recent = all($conn, "SELECT i.incident_id, i.date_reported, i.status, i.landmark, i.is_priority, t.type_name FROM incidents i
         JOIN incident_types t ON t.type_id = i.type_id WHERE i.date_reported >= ? ORDER BY i.date_reported DESC LIMIT 50", $since);
 
 $fmt_min = fn($m) => $m === null ? 'No data yet' : ($m < 60 ? $m . ' min' : floor($m / 60) . ' hr ' . ($m % 60) . ' min');
+// big number on the tiles, a dash when there's nothing to average yet
+$tile_min = fn($m) => $m === null ? '&ndash;' : e($fmt_min((int)$m));
 $resolved_pct = $tot['total'] ? round($tot['resolved'] / $tot['total'] * 100) : null;
 $export_from = $range === 'all' ? '' : date('Y-m-d', strtotime("-$range days"));
 
@@ -87,8 +89,8 @@ include __DIR__ . '/../includes/header.php';
 <div class="stat-row mb-4">
     <div class="stat"><div class="num"><?= (int)$tot['total'] ?></div><div class="lbl">Reports</div></div>
     <div class="stat"><div class="num"><?= $resolved_pct === null ? '&ndash;' : $resolved_pct . '%' ?></div><div class="lbl">Resolved (<?= (int)$tot['resolved'] ?>)</div></div>
-    <div class="stat"><div class="num"><?= e($fmt_min($speed['ack_min'] === null ? null : (int)$speed['ack_min'])) ?></div><div class="lbl">Average time from report to acknowledge</div></div>
-    <div class="stat"><div class="num"><?= e($fmt_min($arrive['arrive_min'] === null ? null : (int)$arrive['arrive_min'])) ?></div><div class="lbl">Average time from report until responders arrive</div></div>
+    <div class="stat"><div class="num"><?= $tile_min($speed['ack_min']) ?></div><div class="lbl">Average time from report to acknowledge</div></div>
+    <div class="stat"><div class="num"><?= $tile_min($arrive['arrive_min']) ?></div><div class="lbl">Average time from report until responders arrive</div></div>
 </div>
 
 <div class="row g-4">
@@ -140,7 +142,7 @@ include __DIR__ . '/../includes/header.php';
                     <tbody><?php foreach ($recent as $r): ?>
                         <tr><td class="text-nowrap"><a href="<?= url('admin/incident.php?id=' . (int)$r['incident_id']) ?>"><?= (int)$r['incident_id'] ?></a></td>
                             <td class="text-nowrap"><?= e(date('M j, Y g:i A', strtotime($r['date_reported']))) ?></td>
-                            <td><?= e($r['type_name']) ?></td><td><?= e($r['landmark'] ?: '') ?></td>
+                            <td><?= e($r['type_name']) ?></td><td><div class="clip-2" title="<?= e($r['landmark'] ?: '') ?>"><?= e($r['landmark'] ?: '') ?></div></td>
                             <td><?= $r['is_priority'] ? 'Yes' : '' ?></td><td><?= e(status_label($r['status'])) ?></td></tr>
                     <?php endforeach; ?></tbody>
                 </table></div>

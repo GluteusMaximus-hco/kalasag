@@ -87,7 +87,7 @@ include __DIR__ . '/../includes/header.php';
                     <div class="row g-3">
                         <div class="col-sm-8">
                             <label class="form-label" for="address">House number and street</label>
-                            <input class="form-control<?= isset($errors['address']) ? ' is-invalid' : '' ?>" id="address" name="address" maxlength="255" autocomplete="street-address" value="<?= e($d['address']) ?>" required>
+                            <input class="form-control<?= isset($errors['address']) ? ' is-invalid' : '' ?>" id="address" name="address" maxlength="255" autocomplete="address-line1" value="<?= e($d['address']) ?>" required>
                             <?= $err('address') ?>
                         </div>
                         <div class="col-sm-4">

@@ -90,7 +90,7 @@ include __DIR__ . '/../includes/header.php';
                                         <span class="q-title"><?= e($r['type_name']) ?> #<?= (int)$r['incident_id'] ?></span>
                                         <span class="st st-<?= e($r['status']) ?>"><?= e(status_label($r['status'])) ?></span>
                                     </div>
-                                    <div class="q-meta"><span><?= e($r['landmark'] ?: 'No landmark') ?></span><span>&middot;</span><span><?= e(time_ago($r['date_reported'])) ?></span></div>
+                                    <div class="q-meta"><span class="q-land"><?= e($r['landmark'] ?: 'No landmark') ?></span><span>&middot;</span><span><?= e(time_ago($r['date_reported'])) ?></span></div>
                                     <div class="timeline-mini" aria-hidden="true">
                                         <?php for ($i = 1; $i <= 4; $i++): ?><span class="<?= $i <= $steps[$r['status']] ? 'on' : '' ?>"></span><?php endfor; ?>
                                     </div>

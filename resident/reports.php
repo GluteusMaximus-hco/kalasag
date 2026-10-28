@@ -49,7 +49,7 @@ include __DIR__ . '/../includes/header.php';
                             <div class="q-desc"><?= e($r['description']) ?></div>
                             <div class="q-meta">
                                 <?= badge_priority($r['is_priority']) ?>
-                                <span><?= e($r['landmark'] ?: 'No landmark') ?></span><span>&middot;</span><span><?= e(time_ago($r['date_reported'])) ?></span>
+                                <span class="q-land"><?= e($r['landmark'] ?: 'No landmark') ?></span><span>&middot;</span><span><?= e(time_ago($r['date_reported'])) ?></span>
                                 <?php if ($r['replies']): ?><span>&middot;</span><span><i class="bi bi-chat-dots-fill"></i> <?= (int)$r['replies'] ?></span><?php endif; ?>
                             </div>
                             <div class="timeline-mini" aria-hidden="true">

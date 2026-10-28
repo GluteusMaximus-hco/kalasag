@@ -145,6 +145,8 @@ For SMS on XAMPP, curl has to be on: in XAMPP, click **Config** next to Apache, 
 - 5 wrong logins = wait 60 secs
 - Role checks on every page, residents only see their own reports
 - CSV export blocks formula injection
+- Pages can't be loaded inside other sites (clickjacking), and tracking codes or reset links in the address never leak to the map or font servers
+- On https the login cookie is secure-only
 
 Accounts are deactivated instead of deleted, and reports are cancelled instead of deleted, so the barangay keeps a full record for analytics and accountability.
 

@@ -37,9 +37,10 @@ $confirm     = ask('Confirm password', true);
 
 // same rules as the register page
 $errors = [];
-if ($full_name === '') $errors[] = 'Full name is required.';
+if ($full_name === '' || mb_strlen($full_name) > 120) $errors[] = 'Full name is required (up to 120 characters).';
+if (mb_strlen($position) > 80 || mb_strlen($designation) > 80) $errors[] = 'Position and designation can be up to 80 characters each.';
 if (!preg_match('/^09\d{9}$/', $contact)) $errors[] = 'Mobile number must be 11 digits starting with 09.';
-if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Email is not valid.';
+if ($email !== '' && (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 120)) $errors[] = 'Email is not valid.';
 if (!preg_match('/^[A-Za-z0-9_]{4,30}$/', $username)) $errors[] = 'Username must be 4 to 30 letters, numbers, or underscores.';
 if (strlen($password) < 8) $errors[] = 'Password must be at least 8 characters.';
 elseif ($password !== $confirm) $errors[] = 'Passwords don\'t match.';

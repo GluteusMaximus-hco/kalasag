@@ -15,8 +15,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $confirm  = $_POST['confirm'] ?? '';
 
     // validation, one msg per field so the user knows exactly what to fix
+    // 50 each so "first last" always fits the 120 character full_name column
     if ($old['first_name'] === '') $errors['first_name'] = 'Enter your first name.';
+    elseif (mb_strlen($old['first_name']) > 50) $errors['first_name'] = 'Keep your first name under 50 characters.';
     if ($old['last_name'] === '')  $errors['last_name']  = 'Enter your last name.';
+    elseif (mb_strlen($old['last_name']) > 50) $errors['last_name'] = 'Keep your last name under 50 characters.';
 
     // real date, not in the future, not before 1900 (string compare works for YYYY-MM-DD)
     if (!valid_date($old['birthdate']) || $old['birthdate'] > date('Y-m-d') || $old['birthdate'] < '1900-01-01') $errors['birthdate'] = 'Enter a valid birthdate.';
@@ -25,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // email is optional, used for forgot password and email updates
     if ($old['email'] !== '') {
-        if (!filter_var($old['email'], FILTER_VALIDATE_EMAIL)) {
+        if (!filter_var($old['email'], FILTER_VALIDATE_EMAIL) || mb_strlen($old['email']) > 120) {
             $errors['email'] = 'Enter a valid email, like juan@gmail.com.';
         } else {
             $chk = $conn->prepare('SELECT 1 FROM users WHERE email = ?');
@@ -97,12 +100,12 @@ auth_top('Create an account');
     <div class="row g-3">
         <div class="col-sm-6">
             <label class="form-label" for="first_name">First name</label>
-            <input class="form-control<?= inv($errors,'first_name') ?>" id="first_name" name="first_name" value="<?= e($old['first_name']) ?>" autocomplete="given-name" required>
+            <input class="form-control<?= inv($errors,'first_name') ?>" id="first_name" name="first_name" maxlength="50" value="<?= e($old['first_name']) ?>" autocomplete="given-name" required>
             <?= field_err($errors, 'first_name') ?>
         </div>
         <div class="col-sm-6">
             <label class="form-label" for="last_name">Last name</label>
-            <input class="form-control<?= inv($errors,'last_name') ?>" id="last_name" name="last_name" value="<?= e($old['last_name']) ?>" autocomplete="family-name" required>
+            <input class="form-control<?= inv($errors,'last_name') ?>" id="last_name" name="last_name" maxlength="50" value="<?= e($old['last_name']) ?>" autocomplete="family-name" required>
             <?= field_err($errors, 'last_name') ?>
         </div>
         <div class="col-sm-6">
@@ -117,7 +120,7 @@ auth_top('Create an account');
         </div>
         <div class="col-12">
             <label class="form-label" for="email">Email <span class="text-secondary fw-normal">(optional)</span></label>
-            <input class="form-control<?= inv($errors,'email') ?>" id="email" name="email" type="email" value="<?= e($old['email']) ?>" autocomplete="email">
+            <input class="form-control<?= inv($errors,'email') ?>" id="email" name="email" type="email" maxlength="120" value="<?= e($old['email']) ?>" autocomplete="email">
             <?= field_err($errors, 'email') ?: '<div class="form-text">For password resets and email updates about your reports.</div>' ?>
         </div>
         <div class="col-12">

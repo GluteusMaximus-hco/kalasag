@@ -128,7 +128,7 @@ include __DIR__ . '/../includes/header.php';
                             <td class="text-nowrap"><i class="bi <?= e($r['icon_name']) ?> me-1"></i><?= e($r['type_name']) ?></td>
                             <td class="text-nowrap"><?= e(date('M j, g:i A', strtotime($r['date_reported']))) ?><div class="small text-secondary"><?= e(time_ago($r['date_reported'])) ?></div></td>
                             <td><?= e($r['reporter']) ?><?= $r['is_guest'] ? ' <span class="badge text-bg-light border">guest</span>' : '' ?></td>
-                            <td><?= e($r['landmark'] ?: '') ?></td>
+                            <td><div class="clip-2" title="<?= e($r['landmark'] ?: '') ?>"><?= e($r['landmark'] ?: '') ?></div></td>
                             <td><?= badge_urgency($r['urgency']) ?> <?= badge_priority($r['is_priority']) ?></td>
                             <td><?= badge_status($r['status']) ?></td>
                         </tr>

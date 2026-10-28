@@ -47,11 +47,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $form['first_name'] = trim($_POST['first_name'] ?? '');
             $form['last_name'] = trim($_POST['last_name'] ?? '');
             if ($form['first_name'] === '') $E['first_name'] = 'Enter your first name.';
+            elseif (mb_strlen($form['first_name']) > 50) $E['first_name'] = 'Keep your first name under 50 characters.';
             if ($form['last_name'] === '') $E['last_name'] = 'Enter your last name.';
+            elseif (mb_strlen($form['last_name']) > 50) $E['last_name'] = 'Keep your last name under 50 characters.';
             $full = $form['first_name'] . ' ' . $form['last_name'];
         } else {
             $form['full_name'] = trim($_POST['full_name'] ?? '');
             if ($form['full_name'] === '') $E['full_name'] = 'Enter your full name.';
+            elseif (mb_strlen($form['full_name']) > 120) $E['full_name'] = 'Keep your name under 120 characters.';
             $full = $form['full_name'];
         }
 
@@ -59,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // email is optional, but if they put one it has to be valid and not used by someone else
         if ($form['email'] !== '') {
-            if (!filter_var($form['email'], FILTER_VALIDATE_EMAIL)) {
+            if (!filter_var($form['email'], FILTER_VALIDATE_EMAIL) || mb_strlen($form['email']) > 120) {
                 $E['email'] = 'Enter a valid email, like juan@gmail.com.';
             } else {
                 $chk = $conn->prepare('SELECT 1 FROM users WHERE email = ? AND user_id <> ?');
@@ -155,18 +158,18 @@ include __DIR__ . '/includes/header.php';
                         <?php if ($u['role'] === 'resident'): ?>
                             <div class="col-sm-6">
                                 <label class="form-label" for="first_name">First name</label>
-                                <input class="form-control<?= finv($P,'first_name') ?>" id="first_name" name="first_name" value="<?= e($form['first_name']) ?>" autocomplete="given-name" required>
+                                <input class="form-control<?= finv($P,'first_name') ?>" id="first_name" name="first_name" maxlength="50" value="<?= e($form['first_name']) ?>" autocomplete="given-name" required>
                                 <?= ferr($P, 'first_name') ?>
                             </div>
                             <div class="col-sm-6">
                                 <label class="form-label" for="last_name">Last name</label>
-                                <input class="form-control<?= finv($P,'last_name') ?>" id="last_name" name="last_name" value="<?= e($form['last_name']) ?>" autocomplete="family-name" required>
+                                <input class="form-control<?= finv($P,'last_name') ?>" id="last_name" name="last_name" maxlength="50" value="<?= e($form['last_name']) ?>" autocomplete="family-name" required>
                                 <?= ferr($P, 'last_name') ?>
                             </div>
                         <?php else: ?>
                             <div class="col-12">
                                 <label class="form-label" for="full_name">Full name</label>
-                                <input class="form-control<?= finv($P,'full_name') ?>" id="full_name" name="full_name" value="<?= e($form['full_name']) ?>" autocomplete="name" required>
+                                <input class="form-control<?= finv($P,'full_name') ?>" id="full_name" name="full_name" maxlength="120" value="<?= e($form['full_name']) ?>" autocomplete="name" required>
                                 <?= ferr($P, 'full_name') ?>
                             </div>
                         <?php endif; ?>
@@ -177,7 +180,7 @@ include __DIR__ . '/includes/header.php';
                         </div>
                         <div class="col-sm-6">
                             <label class="form-label" for="email">Email <span class="text-secondary fw-normal">(optional)</span></label>
-                            <input class="form-control<?= finv($P,'email') ?>" id="email" name="email" type="email" value="<?= e($form['email'] ?? '') ?>" autocomplete="email">
+                            <input class="form-control<?= finv($P,'email') ?>" id="email" name="email" type="email" maxlength="120" value="<?= e($form['email'] ?? '') ?>" autocomplete="email">
                             <?= ferr($P, 'email') ?: '<div class="form-text">' . e($hint_email) . '</div>' ?>
                         </div>
                     </div>

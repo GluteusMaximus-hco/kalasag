@@ -127,12 +127,10 @@ if ($edit_id && $_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $teams = $conn->query("SELECT rp.responder_id, rp.team_name, rp.contact_no, rp.availability, us.full_name, us.username, us.is_active,
-        GROUP_CONCAT(t.type_name ORDER BY t.type_name SEPARATOR ', ') AS handles,
+        (SELECT GROUP_CONCAT(t.type_name ORDER BY t.type_name SEPARATOR ', ') FROM responder_capabilities c JOIN incident_types t ON t.type_id = c.type_id WHERE c.responder_id = rp.responder_id) AS handles,
         (SELECT COUNT(*) FROM incident_responses r WHERE r.responder_id = rp.responder_id AND r.cleared_at IS NULL) AS open_jobs
     FROM responders rp JOIN users us ON us.user_id = rp.user_id
-    LEFT JOIN responder_capabilities c ON c.responder_id = rp.responder_id
-    LEFT JOIN incident_types t ON t.type_id = c.type_id
-    GROUP BY rp.responder_id ORDER BY us.is_active DESC, rp.team_name")->fetch_all(MYSQLI_ASSOC);
+    ORDER BY us.is_active DESC, rp.team_name")->fetch_all(MYSQLI_ASSOC);
 
 $err = fn($k) => isset($errors[$k]) ? '<div class="invalid-feedback d-block">' . e($errors[$k]) . '</div>' : '';
 $inv = fn($k) => isset($errors[$k]) ? ' is-invalid' : '';

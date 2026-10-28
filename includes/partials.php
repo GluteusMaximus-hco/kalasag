@@ -63,7 +63,7 @@ function render_messages($messages, $mine) {
         echo '<div class="bubble ' . $side . '">'
            . '<div class="who">' . e($labels[$m['sender_type']] ?? '') . ($m['sender_type'] !== 'guest' ? ' &middot; ' . e($m['who']) : '') . '</div>'
            . '<div>' . nl2br(e($m['message'])) . '</div>'
-           . '<time>' . e(time_ago($m['sent_at'])) . '</time></div>';
+           . '<time datetime="' . e(date('c', strtotime($m['sent_at']))) . '">' . e(time_ago($m['sent_at'])) . '</time></div>';
     }
     echo '</div>';
 }

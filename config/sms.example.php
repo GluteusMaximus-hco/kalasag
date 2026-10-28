@@ -5,8 +5,8 @@
 // HOW TO USE:
 //   1. install "SMS Gateway for Android" on the phone (download the apk from sms-gate.app)
 //   2. open the app, turn on "Cloud server", then tap Start (some versions say Offline/Online)
-//   3. copy the username and password shown on the app's Home tab into the lines below
-//   4. copy this file:  cp config/sms.example.php config/sms.php
+//   3. copy this file:  cp config/sms.example.php config/sms.php
+//   4. put the username and password shown on the app's Home tab into config/sms.php
 //   5. NEVER push config/sms.php to github (it's in .gitignore already)
 //
 // the phone needs internet (data or wifi) and load / unli text on the SIM

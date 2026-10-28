@@ -88,7 +88,7 @@ include __DIR__ . '/../includes/header.php';
                                     <button class="btn btn-sm btn-outline-danger" type="submit" data-confirm="Remove <?= e($c['center_name']) ?>?">Remove</button></form>
                             </div>
                         </div>
-                        <form method="post" class="btn-group btn-group-sm align-self-start" role="group" aria-label="Status of <?= e($c['center_name']) ?>">
+                        <form method="post" class="btn-group btn-group-sm align-self-start" aria-label="Status of <?= e($c['center_name']) ?>">
                             <?= csrf_field() ?><input type="hidden" name="action" value="status"><input type="hidden" name="center_id" value="<?= (int)$c['center_id'] ?>">
                             <?php foreach ($statuses as $k => $lbl): ?>
                                 <button type="submit" name="status" value="<?= $k ?>" class="btn <?= $c['status'] === $k ? 'btn-umber' : 'btn-outline-secondary' ?>" <?= $c['status'] === $k ? 'aria-pressed="true"' : '' ?>><?= $lbl ?></button>

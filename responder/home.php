@@ -52,7 +52,7 @@ include __DIR__ . '/../includes/header.php';
                             </div>
                             <div class="q-desc"><?= e($j['description']) ?></div>
                             <div class="q-meta">
-                                <span><?= e($j['landmark'] ?: 'No landmark') ?></span><span>&middot;</span>
+                                <span class="q-land"><?= e($j['landmark'] ?: 'No landmark') ?></span><span>&middot;</span>
                                 <span>Dispatched <?= e(time_ago($j['dispatched_at'])) ?></span><span>&middot;</span>
                                 <span><?= $j['arrived_at'] ? 'Arrived ' . e(time_ago($j['arrived_at'])) : 'Not yet arrived' ?></span>
                             </div>
