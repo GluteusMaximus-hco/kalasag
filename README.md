@@ -66,15 +66,27 @@ Then open KALASAG on local host, port 8000, in the browser.
 
 1. Copy the `kalasag` folder into `C:\xampp\htdocs\`
 2. Start **Apache** and **MySQL** in the XAMPP Control Panel
-3. In phpMyAdmin, import `database\schema.sql`, then run the CREATE USER / GRANT line from the Linux steps in the SQL tab
-4. Make the first admin account in Command Prompt:
+3. Open phpMyAdmin (the **Admin** button next to MySQL), go to **Import**, pick `kalasag\database\schema.sql` and click **Import**
+4. In the **SQL** tab, run this to make the database user:
+
+```sql
+CREATE USER IF NOT EXISTS 'kalasag'@'localhost' IDENTIFIED BY 'kalasag123';
+GRANT ALL ON kalasag_db.* TO 'kalasag'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+5. Make the first admin account in Command Prompt, then type in the name, username, and password it asks for:
 
 ```
 cd C:\xampp\htdocs\kalasag
 C:\xampp\php\php.exe setup\create_admin.php
 ```
 
-5. Open KALASAG on local host in the browser (the kalasag folder)
+6. Open KALASAG on local host in the browser (the kalasag folder) and log in with that admin
+
+If photo uploads don't work, open `php.ini` from the XAMPP **Config** button, remove the `;` before `extension=gd`, and restart Apache.
+
+The download has no accounts in it, so every new install makes its own admin with `create_admin.php`. Residents and responder teams sign up on the site.
 
 ### SMS and email
 
